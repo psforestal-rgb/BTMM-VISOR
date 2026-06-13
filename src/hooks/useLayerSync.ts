@@ -6,13 +6,14 @@ import GeoJSON from 'ol/format/GeoJSON';
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type BaseLayer from 'ol/layer/Base';
-import { useLayerStore } from '../store/layerStore';
+import { selectLabelsConfig, useLayerStore } from '../store/layerStore';
 import { createOLLayer } from '../utils/olLayerFactory';
 
 type RealtimeHandle = WebSocket | ReturnType<typeof setInterval>;
 
 export function useLayerSync(mapRef: React.RefObject<OLMap | null>) {
   const { baseMaps, overlays } = useLayerStore();
+  const labelsConfig = useLayerStore(selectLabelsConfig);
   const olLayers = useRef(new globalThis.Map<string, BaseLayer>());
   const rtHandles = useRef(new globalThis.Map<string, RealtimeHandle>());
 
@@ -20,7 +21,8 @@ export function useLayerSync(mapRef: React.RefObject<OLMap | null>) {
     const map = mapRef.current;
     if (!map) return;
 
-    const allConfigs = [...baseMaps, ...overlays];
+    // labels overlay sits above all user overlays (zIndex 50)
+    const allConfigs = [...baseMaps, ...overlays, labelsConfig];
     const desired = new globalThis.Set(allConfigs.map((c) => c.id));
 
     // Remove stale layers

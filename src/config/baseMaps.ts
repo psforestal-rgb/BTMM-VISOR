@@ -25,16 +25,17 @@ export const BASE_MAPS: XYZLayerConfig[] = [
     opacity: 1,
     zIndex: 0,
   },
-  {
-    id: 'carto-labels',
-    title: 'Solo etiquetas',
-    type: 'xyz',
-    url: 'https://{a-d}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}@2x.png',
-    attributions:
-      '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
-    maxZoom: 19,
-    visible: false,
-    opacity: 1,
-    zIndex: 0,
-  },
 ];
+
+export const LABELS_OVERLAY: XYZLayerConfig = {
+  id: 'carto-labels',
+  title: 'Etiquetas',
+  type: 'xyz',
+  url: 'https://{a-d}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}@2x.png',
+  attributions:
+    '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+  maxZoom: 19,
+  visible: false,
+  opacity: 1,
+  zIndex: 50,
+};

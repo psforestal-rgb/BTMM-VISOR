@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import type { LayerConfig, XYZLayerConfig } from '../types/layer';
-import { BASE_MAPS } from '../config/baseMaps';
+import { BASE_MAPS, LABELS_OVERLAY } from '../config/baseMaps';
 
 interface LayerStore {
   baseMapId: string;
   baseMaps: XYZLayerConfig[];
+  labelsVisible: boolean;
   overlays: LayerConfig[];
   setBaseMap: (id: string) => void;
+  toggleLabels: () => void;
   addOverlay: (layer: LayerConfig) => void;
   removeOverlay: (id: string) => void;
   toggleOverlay: (id: string) => void;
@@ -15,8 +17,9 @@ interface LayerStore {
 }
 
 export const useLayerStore = create<LayerStore>((set) => ({
-  baseMapId: 'osm',
+  baseMapId: 'esri-satellite',
   baseMaps: BASE_MAPS,
+  labelsVisible: false,
   overlays: [],
 
   setBaseMap: (id) =>
@@ -24,6 +27,9 @@ export const useLayerStore = create<LayerStore>((set) => ({
       baseMapId: id,
       baseMaps: state.baseMaps.map((bm) => ({ ...bm, visible: bm.id === id })),
     })),
+
+  toggleLabels: () =>
+    set((state) => ({ labelsVisible: !state.labelsVisible })),
 
   addOverlay: (layer) =>
     set((state) => ({ overlays: [...state.overlays, layer] })),
@@ -53,3 +59,9 @@ export const useLayerStore = create<LayerStore>((set) => ({
       return { overlays: arr };
     }),
 }));
+
+// Derived selector: the labels layer config with current visibility
+export const selectLabelsConfig = (state: LayerStore): XYZLayerConfig => ({
+  ...LABELS_OVERLAY,
+  visible: state.labelsVisible,
+});

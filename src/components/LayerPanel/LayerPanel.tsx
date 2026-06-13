@@ -2,13 +2,17 @@ import { useLayerStore } from '../../store/layerStore';
 import './LayerPanel.css';
 
 export function LayerPanel() {
-  const { baseMapId, baseMaps, overlays, setBaseMap, toggleOverlay, removeOverlay, setOpacity } =
-    useLayerStore();
+  const {
+    baseMapId, baseMaps, labelsVisible,
+    overlays, setBaseMap, toggleLabels,
+    toggleOverlay, removeOverlay, setOpacity,
+  } = useLayerStore();
 
   return (
     <aside className="layer-panel">
       <h2 className="panel-title">Capas</h2>
 
+      {/* Base maps */}
       <section className="panel-section">
         <h3 className="section-heading">Mapa base</h3>
         {baseMaps.map((bm) => (
@@ -25,9 +29,23 @@ export function LayerPanel() {
         ))}
       </section>
 
+      {/* Labels overlay — always present, no delete */}
+      <section className="panel-section">
+        <h3 className="section-heading">Superposición</h3>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={labelsVisible}
+            onChange={toggleLabels}
+          />
+          Etiquetas
+        </label>
+      </section>
+
+      {/* User-added overlays */}
       {overlays.length > 0 && (
         <section className="panel-section">
-          <h3 className="section-heading">Capas adicionales</h3>
+          <h3 className="section-heading">Capas cargadas</h3>
           {[...overlays].reverse().map((layer) => (
             <div key={layer.id} className="overlay-row">
               <label className="checkbox-row">
