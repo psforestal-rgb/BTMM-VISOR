@@ -16,8 +16,8 @@ export function useMap(targetRef: React.RefObject<HTMLDivElement | null>) {
     mapRef.current = new Map({
       target: targetRef.current,
       view: new View({
-        center: fromLonLat([-66, 10]),
-        zoom: 5,
+        center: fromLonLat([-83.77, 9.60]), // Área Bloque — Costa Rica
+        zoom: 10,
         minZoom: 2,
         maxZoom: 22,
       }),

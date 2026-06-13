@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useLayerStore } from '../../store/layerStore';
 import { loadLayerFile } from '../../utils/fileLoaders';
+import { PRESET_VIEWS } from '../../config/presetViews';
 import './Toolbar.css';
 
 const ACCEPT = '.geojson,.json,.kml,.gpx,.zip,.gpkg';
@@ -8,6 +9,7 @@ const ACCEPT = '.geojson,.json,.kml,.gpx,.zip,.gpkg';
 export function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addOverlay = useLayerStore((s) => s.addOverlay);
+  const flyTo = useLayerStore((s) => s.flyTo);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +33,24 @@ export function Toolbar() {
     <>
       <header className="toolbar">
         <span className="toolbar-brand">BTMM VISOR</span>
-        <div className="toolbar-actions">
+
+        <div className="toolbar-group">
+          <span className="toolbar-label">Vista</span>
+          {PRESET_VIEWS.map((v) => (
+            <button
+              key={v.id}
+              className={`tb-btn${v.id === 'bloque' ? ' tb-btn--primary' : ''}`}
+              onClick={() => flyTo(v.center, v.zoom)}
+              title={v.title}
+            >
+              {v.title}
+            </button>
+          ))}
+        </div>
+
+        <div className="toolbar-divider" />
+
+        <div className="toolbar-group">
           <button
             className="tb-btn"
             onClick={() => fileInputRef.current?.click()}
@@ -42,6 +61,7 @@ export function Toolbar() {
           </button>
           <span className="tb-hint">GeoJSON · KML · GPX · SHP (zip) · GPKG</span>
         </div>
+
         <input
           ref={fileInputRef}
           type="file"

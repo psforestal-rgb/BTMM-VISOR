@@ -2,11 +2,17 @@ import { create } from 'zustand';
 import type { LayerConfig, XYZLayerConfig } from '../types/layer';
 import { BASE_MAPS, LABELS_OVERLAY } from '../config/baseMaps';
 
+export interface PendingView {
+  center: [number, number]; // [lon, lat] WGS84
+  zoom: number;
+}
+
 interface LayerStore {
   baseMapId: string;
   baseMaps: XYZLayerConfig[];
   labelsVisible: boolean;
   overlays: LayerConfig[];
+  pendingView: PendingView | null;
   setBaseMap: (id: string) => void;
   toggleLabels: () => void;
   addOverlay: (layer: LayerConfig) => void;
@@ -14,6 +20,8 @@ interface LayerStore {
   toggleOverlay: (id: string) => void;
   setOpacity: (id: string, opacity: number) => void;
   reorderOverlays: (fromIndex: number, toIndex: number) => void;
+  flyTo: (center: [number, number], zoom: number) => void;
+  clearPendingView: () => void;
 }
 
 export const useLayerStore = create<LayerStore>((set) => ({
@@ -21,6 +29,7 @@ export const useLayerStore = create<LayerStore>((set) => ({
   baseMaps: BASE_MAPS,
   labelsVisible: false,
   overlays: [],
+  pendingView: null,
 
   setBaseMap: (id) =>
     set((state) => ({
@@ -58,9 +67,11 @@ export const useLayerStore = create<LayerStore>((set) => ({
       arr.splice(toIndex, 0, item);
       return { overlays: arr };
     }),
+
+  flyTo: (center, zoom) => set({ pendingView: { center, zoom } }),
+  clearPendingView: () => set({ pendingView: null }),
 }));
 
-// Derived selector: the labels layer config with current visibility
 export const selectLabelsConfig = (state: LayerStore): XYZLayerConfig => ({
   ...LABELS_OVERLAY,
   visible: state.labelsVisible,

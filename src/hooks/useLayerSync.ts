@@ -3,6 +3,7 @@ import OLMap from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
+import { fromLonLat } from 'ol/proj';
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type BaseLayer from 'ol/layer/Base';
@@ -12,7 +13,7 @@ import { createOLLayer } from '../utils/olLayerFactory';
 type RealtimeHandle = WebSocket | ReturnType<typeof setInterval>;
 
 export function useLayerSync(mapRef: React.RefObject<OLMap | null>) {
-  const { baseMaps, overlays } = useLayerStore();
+  const { baseMaps, overlays, pendingView, clearPendingView } = useLayerStore();
   const labelsConfig = useLayerStore(selectLabelsConfig);
   const olLayers = useRef(new globalThis.Map<string, BaseLayer>());
   const rtHandles = useRef(new globalThis.Map<string, RealtimeHandle>());
@@ -60,6 +61,17 @@ export function useLayerSync(mapRef: React.RefObject<OLMap | null>) {
       }
     });
   });
+
+  // Apply flyTo commands from the store
+  useEffect(() => {
+    if (!pendingView || !mapRef.current) return;
+    mapRef.current.getView().animate({
+      center: fromLonLat(pendingView.center),
+      zoom: pendingView.zoom,
+      duration: 800,
+    });
+    clearPendingView();
+  }, [pendingView, mapRef, clearPendingView]);
 
   // Clean up realtime handles on unmount
   useEffect(() => {
