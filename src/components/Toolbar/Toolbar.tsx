@@ -5,13 +5,20 @@ import { PRESET_VIEWS } from '../../config/presetViews';
 import './Toolbar.css';
 
 const ACCEPT = '.geojson,.json,.kml,.gpx,.zip,.gpkg';
+const FILE_HINT = 'Cargar capa vectorial — GeoJSON, KML, GPX, Shapefile (.zip) o GeoPackage (.gpkg)';
 
-export function Toolbar() {
+interface Props {
+  panelOpen: boolean;
+  onTogglePanel: () => void;
+}
+
+export function Toolbar({ panelOpen, onTogglePanel }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addOverlay = useLayerStore((s) => s.addOverlay);
   const flyTo = useLayerStore((s) => s.flyTo);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedView, setSelectedView] = useState('');
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -29,38 +36,55 @@ export function Toolbar() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleViewChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setSelectedView('');
+    const view = PRESET_VIEWS.find((v) => v.id === id);
+    if (view) flyTo(view.center, view.zoom);
+  };
+
   return (
     <>
       <header className="toolbar">
-        <span className="toolbar-brand">BTMM VISOR</span>
+        {/* Panel toggle */}
+        <button
+          className={`tb-btn tb-btn--icon${panelOpen ? ' tb-btn--active' : ''}`}
+          onClick={onTogglePanel}
+          title={panelOpen ? 'Ocultar panel de capas' : 'Mostrar panel de capas'}
+          aria-label="Panel de capas"
+        >
+          ☰
+        </button>
 
-        <div className="toolbar-group">
-          <span className="toolbar-label">Vista</span>
-          {PRESET_VIEWS.map((v) => (
-            <button
-              key={v.id}
-              className={`tb-btn${v.id === 'bloque' ? ' tb-btn--primary' : ''}`}
-              onClick={() => flyTo(v.center, v.zoom)}
-              title={v.title}
-            >
-              {v.title}
-            </button>
-          ))}
-        </div>
+        <span className="toolbar-brand">BTMM VISOR</span>
 
         <div className="toolbar-divider" />
 
-        <div className="toolbar-group">
-          <button
-            className="tb-btn"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
-            title="Cargar GeoJSON, KML, GPX, Shapefile (.zip) o GeoPackage (.gpkg)"
-          >
-            {loading ? 'Cargando…' : '+ Capa vectorial'}
-          </button>
-          <span className="tb-hint">GeoJSON · KML · GPX · SHP (zip) · GPKG</span>
-        </div>
+        {/* Preset views — compact select */}
+        <label className="toolbar-label" htmlFor="view-select">Vista</label>
+        <select
+          id="view-select"
+          className="view-select"
+          value={selectedView}
+          onChange={handleViewChange}
+        >
+          <option value="" disabled>— Ir a… —</option>
+          {PRESET_VIEWS.map((v) => (
+            <option key={v.id} value={v.id}>{v.title}</option>
+          ))}
+        </select>
+
+        <div className="toolbar-divider" />
+
+        {/* Load vector layer */}
+        <button
+          className="tb-btn"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={loading}
+          title={FILE_HINT}
+        >
+          {loading ? 'Cargando…' : '+ Capa vectorial'}
+        </button>
 
         <input
           ref={fileInputRef}
@@ -71,6 +95,7 @@ export function Toolbar() {
           onChange={(e) => handleFiles(e.target.files)}
         />
       </header>
+
       {error && (
         <div className="error-banner" onClick={() => setError(null)}>
           {error} <span className="error-close">✕</span>

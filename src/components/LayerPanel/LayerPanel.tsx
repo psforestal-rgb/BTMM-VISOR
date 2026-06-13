@@ -8,7 +8,12 @@ function isVector(l: LayerConfig): l is VectorLayerConfig {
   return l.type === 'geojson' || l.type === 'kml' || l.type === 'realtime';
 }
 
-export function LayerPanel() {
+interface Props {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function LayerPanel({ open, onClose }: Props) {
   const {
     baseMapId, baseMaps, labelsVisible,
     overlays, setBaseMap, toggleLabels,
@@ -23,8 +28,11 @@ export function LayerPanel() {
     setStyleOpen((prev) => (prev === id ? null : id));
 
   return (
-    <aside className="layer-panel">
-      <h2 className="panel-title">Capas</h2>
+    <aside className={`layer-panel${open ? '' : ' layer-panel--closed'}`}>
+      <h2 className="panel-title">
+        Capas
+        <button className="panel-close-btn" onClick={onClose} title="Ocultar panel">✕</button>
+      </h2>
 
       {/* ── Base maps ─────────────────────────────────────── */}
       <section className="panel-section">

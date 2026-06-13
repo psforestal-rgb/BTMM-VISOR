@@ -7,6 +7,7 @@ import { registerSW } from 'virtual:pwa-register';
 import './App.css';
 
 export default function App() {
+  const [panelOpen, setPanelOpen] = useState(true);
   const [updateReady, setUpdateReady] = useState(false);
   const [updateSW, setUpdateSW] = useState<(() => void) | null>(null);
 
@@ -22,9 +23,9 @@ export default function App() {
   return (
     <FileDropzone>
       <div className="app-shell">
-        <Toolbar />
+        <Toolbar onTogglePanel={() => setPanelOpen((p) => !p)} panelOpen={panelOpen} />
         <div className="app-body">
-          <LayerPanel />
+          <LayerPanel open={panelOpen} onClose={() => setPanelOpen(false)} />
           <div className="map-container">
             <MapViewer />
           </div>
