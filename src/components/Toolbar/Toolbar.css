@@ -1,0 +1,146 @@
+.toolbar {
+  height: 44px;
+  background: #0f0f1f;
+  border-bottom: 1px solid #2e2e4a;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  gap: 1rem;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.toolbar-brand {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #8888ee;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.tb-btn {
+  background: #2a2a4a;
+  border: 1px solid #4444aa;
+  color: #c0c0ff;
+  border-radius: 4px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.tb-btn:hover {
+  background: #3a3a6a;
+}
+
+.error-banner {
+  background: #4a1a1a;
+  border-bottom: 1px solid #aa3333;
+  color: #ffaaaa;
+  font-size: 0.8rem;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.error-close {
+  opacity: 0.6;
+  font-size: 0.7rem;
+}
+
+/* Shared dialog styles */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.dialog {
+  background: #1a1a2e;
+  border: 1px solid #3a3a6a;
+  border-radius: 8px;
+  padding: 1.5rem;
+  min-width: 340px;
+  max-width: 480px;
+  width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dialog h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #aaaaee;
+}
+
+.dialog label {
+  font-size: 0.78rem;
+  color: #aaaaaa;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dialog input[type='text'],
+.dialog input[type='number'],
+.dialog select {
+  background: #0f0f1f;
+  border: 1px solid #3a3a6a;
+  border-radius: 4px;
+  color: #e0e0e0;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.82rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-primary {
+  background: #3a3aaa;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #5555cc;
+}
+
+.btn-cancel {
+  background: none;
+  border: 1px solid #3a3a6a;
+  color: #aaaaaa;
+  border-radius: 4px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  border-color: #6666aa;
+}
