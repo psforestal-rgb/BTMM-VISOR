@@ -1,25 +1,27 @@
 import { useEffect, useRef } from 'react';
-import type Map from 'ol/Map';
-import type VectorLayer from 'ol/layer/Vector';
-import type VectorSource from 'ol/source/Vector';
+import OLMap from 'ol/Map';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
+import type Feature from 'ol/Feature';
+import type Geometry from 'ol/geom/Geometry';
 import type BaseLayer from 'ol/layer/Base';
 import { useLayerStore } from '../store/layerStore';
 import { createOLLayer } from '../utils/olLayerFactory';
 
 type RealtimeHandle = WebSocket | ReturnType<typeof setInterval>;
 
-export function useLayerSync(mapRef: React.RefObject<Map | null>) {
+export function useLayerSync(mapRef: React.RefObject<OLMap | null>) {
   const { baseMaps, overlays } = useLayerStore();
-  const olLayers = useRef(new Map<string, BaseLayer>());
-  const rtHandles = useRef(new Map<string, RealtimeHandle>());
+  const olLayers = useRef(new globalThis.Map<string, BaseLayer>());
+  const rtHandles = useRef(new globalThis.Map<string, RealtimeHandle>());
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
     const allConfigs = [...baseMaps, ...overlays];
-    const desired = new Set(allConfigs.map((c) => c.id));
+    const desired = new globalThis.Set(allConfigs.map((c) => c.id));
 
     // Remove stale layers
     olLayers.current.forEach((layer, id) => {
@@ -28,7 +30,7 @@ export function useLayerSync(mapRef: React.RefObject<Map | null>) {
         olLayers.current.delete(id);
         const handle = rtHandles.current.get(id);
         if (handle instanceof WebSocket) handle.close();
-        else if (handle !== undefined) clearInterval(handle);
+        else if (handle !== undefined) clearInterval(handle as ReturnType<typeof setInterval>);
         rtHandles.current.delete(id);
       }
     });
@@ -46,7 +48,7 @@ export function useLayerSync(mapRef: React.RefObject<Map | null>) {
 
         if (config.type === 'realtime') {
           const handle = startRealtimeFeed(
-            layer as VectorLayer<VectorSource>,
+            layer as VectorLayer<Feature<Geometry>>,
             config.url,
             config.protocol,
             config.intervalMs ?? 30000
@@ -57,32 +59,33 @@ export function useLayerSync(mapRef: React.RefObject<Map | null>) {
     });
   });
 
-  // Cleanup all realtime handles on unmount
+  // Clean up realtime handles on unmount
   useEffect(() => {
     return () => {
       rtHandles.current.forEach((handle) => {
         if (handle instanceof WebSocket) handle.close();
-        else clearInterval(handle);
+        else clearInterval(handle as ReturnType<typeof setInterval>);
       });
     };
   }, []);
 }
 
 function startRealtimeFeed(
-  layer: VectorLayer<VectorSource>,
+  layer: VectorLayer<Feature<Geometry>>,
   url: string,
   protocol: 'ws' | 'http',
   intervalMs: number
 ): RealtimeHandle {
-  const source = layer.getSource()!;
+  const source = layer.getSource() as VectorSource<Feature<Geometry>>;
   const format = new GeoJSON();
 
   const update = (json: unknown) => {
     try {
+      const features = format.readFeatures(json, {
+        featureProjection: 'EPSG:3857',
+      }) as Feature<Geometry>[];
       source.clear();
-      source.addFeatures(
-        format.readFeatures(json, { featureProjection: 'EPSG:3857' })
-      );
+      source.addFeatures(features);
     } catch {
       // ignore malformed frames
     }
@@ -94,7 +97,7 @@ function startRealtimeFeed(
       try {
         update(JSON.parse(evt.data as string));
       } catch {
-        // ignore parse error
+        // ignore parse errors
       }
     };
     return ws;
