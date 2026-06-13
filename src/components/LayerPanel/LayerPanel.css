@@ -5,7 +5,6 @@
   color: #e0e0e0;
   display: flex;
   flex-direction: column;
-  gap: 0;
   overflow-y: auto;
   border-right: 1px solid #2e2e4a;
   flex-shrink: 0;
@@ -52,23 +51,84 @@
   cursor: pointer;
 }
 
-.overlay-row {
+/* ── Overlay items ────────────────────────────────────────── */
+
+.overlay-item {
   margin-bottom: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #22224a;
+}
+
+.overlay-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.overlay-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
 }
 
 .layer-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 160px;
+  max-width: 110px;
+  font-size: 0.82rem;
 }
 
-.overlay-controls {
+.overlay-actions {
+  display: flex;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: #8888cc;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.4;
+}
+
+.icon-btn:hover {
+  border-color: #5555aa;
+  color: #ccccff;
+}
+
+.icon-btn--active {
+  border-color: #5555aa;
+  color: #aaaaff;
+  background: #2a2a4a;
+}
+
+.icon-btn--danger {
+  color: #cc5555;
+}
+
+.icon-btn--danger:hover {
+  color: #ff6666;
+  border-color: #aa3333;
+}
+
+/* ── Opacity row ──────────────────────────────────────────── */
+
+.opacity-row {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  margin-top: 0.2rem;
-  padding-left: 1.2rem;
+  padding: 0.15rem 0 0 1.2rem;
+}
+
+.opacity-label {
+  font-size: 0.65rem;
+  color: #6666aa;
+  white-space: nowrap;
 }
 
 .opacity-slider {
@@ -78,16 +138,74 @@
   cursor: pointer;
 }
 
-.remove-btn {
-  background: none;
-  border: none;
-  color: #cc5555;
-  cursor: pointer;
-  font-size: 0.75rem;
-  padding: 0 0.2rem;
-  line-height: 1;
+/* ── Symbology panel ──────────────────────────────────────── */
+
+.style-panel {
+  background: #12122a;
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-.remove-btn:hover {
-  color: #ff6666;
+.style-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.style-label {
+  font-size: 0.65rem;
+  color: #6666aa;
+  min-width: 36px;
+  white-space: nowrap;
+}
+
+.color-input {
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #3a3a6a;
+  border-radius: 3px;
+  cursor: pointer;
+  background: none;
+}
+
+.mini-slider {
+  flex: 1;
+  accent-color: #7777ee;
+  height: 3px;
+  cursor: pointer;
+}
+
+.num-input {
+  width: 44px;
+  background: #0f0f1f;
+  border: 1px solid #3a3a6a;
+  border-radius: 3px;
+  color: #e0e0e0;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.3rem;
+  text-align: center;
+}
+
+.style-unit {
+  font-size: 0.65rem;
+  color: #6666aa;
+}
+
+/* ── Mouse position (OL control override) ─────────────────── */
+.ol-mouse-position {
+  top: auto;
+  bottom: 2rem;
+  right: 0.5rem;
+  background: rgba(15, 15, 31, 0.75);
+  color: #aaaaee;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+  white-space: nowrap;
 }

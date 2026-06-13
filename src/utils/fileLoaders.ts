@@ -6,6 +6,7 @@ import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type { GeoJSONLayerConfig, KMLLayerConfig, LayerConfig } from '../types/layer';
 import type { FeatureCollection } from 'geojson';
+import { VIEW_PROJ } from './olLayerFactory';
 
 const geoJSONFmt = new GeoJSON();
 const kmlFmt = new KML({ extractStyles: true });
@@ -31,8 +32,9 @@ function readAsArrayBuffer(file: File): Promise<ArrayBuffer> {
 }
 
 function featuresToConfig(features: Feature<Geometry>[], title: string): GeoJSONLayerConfig {
+  // Features are in VIEW_PROJ (EPSG:5367); write to WGS84 for storage
   const data = geoJSONFmt.writeFeaturesObject(features, {
-    featureProjection: 'EPSG:3857',
+    featureProjection: VIEW_PROJ,
     dataProjection: 'EPSG:4326',
   });
   return { id: crypto.randomUUID(), title, type: 'geojson', data, visible: true, opacity: 1, zIndex: 10 };
@@ -82,7 +84,7 @@ export async function loadGPXFile(file: File): Promise<GeoJSONLayerConfig[]> {
   try {
     features = gpxFmt.readFeatures(text, {
       dataProjection: 'EPSG:4326',
-      featureProjection: 'EPSG:3857',
+      featureProjection: VIEW_PROJ,
     }) as Feature<Geometry>[];
   } catch { throw new Error(`"${file.name}" no es un GPX válido`); }
   if (!features.length) throw new Error(`"${file.name}" no contiene geometrías`);
@@ -183,7 +185,7 @@ export async function loadGPKGFile(file: File): Promise<GeoJSONLayerConfig[]> {
         const wkb: ArrayBuffer = geomVal.slice(wkbOffset).buffer as ArrayBuffer;
         const geom = wkbFmt.readGeometry(wkb, {
           dataProjection: `EPSG:${srsId}`,
-          featureProjection: 'EPSG:3857',
+          featureProjection: VIEW_PROJ,
         }) as Geometry | null;
         if (!geom) continue;
 

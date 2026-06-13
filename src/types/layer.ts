@@ -1,5 +1,21 @@
 export type LayerType = 'xyz' | 'bing' | 'wms' | 'wfs' | 'geojson' | 'kml' | 'realtime';
 
+export interface LayerStyle {
+  fillColor: string;    // hex
+  fillOpacity: number;  // 0–1
+  strokeColor: string;  // hex
+  strokeWidth: number;  // px
+  pointRadius: number;  // px
+}
+
+export const DEFAULT_LAYER_STYLE: LayerStyle = {
+  fillColor: '#0077cc',
+  fillOpacity: 0.25,
+  strokeColor: '#0077cc',
+  strokeWidth: 2,
+  pointRadius: 5,
+};
+
 export interface BaseLayerConfig {
   id: string;
   title: string;
@@ -45,12 +61,14 @@ export interface GeoJSONLayerConfig extends BaseLayerConfig {
   url?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
+  layerStyle?: LayerStyle;
 }
 
 export interface KMLLayerConfig extends BaseLayerConfig {
   type: 'kml';
   url?: string;
   data?: string;
+  layerStyle?: LayerStyle;
 }
 
 export interface RealtimeLayerConfig extends BaseLayerConfig {
@@ -58,6 +76,7 @@ export interface RealtimeLayerConfig extends BaseLayerConfig {
   url: string;
   protocol: 'ws' | 'http';
   intervalMs?: number;
+  layerStyle?: LayerStyle;
 }
 
 export type LayerConfig =
@@ -68,3 +87,5 @@ export type LayerConfig =
   | GeoJSONLayerConfig
   | KMLLayerConfig
   | RealtimeLayerConfig;
+
+export type VectorLayerConfig = GeoJSONLayerConfig | KMLLayerConfig | RealtimeLayerConfig;

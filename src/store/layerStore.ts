@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { LayerConfig, XYZLayerConfig } from '../types/layer';
+import type { LayerConfig, LayerStyle, VectorLayerConfig, XYZLayerConfig } from '../types/layer';
 import { BASE_MAPS, LABELS_OVERLAY } from '../config/baseMaps';
 
 export interface PendingView {
@@ -13,6 +13,7 @@ interface LayerStore {
   labelsVisible: boolean;
   overlays: LayerConfig[];
   pendingView: PendingView | null;
+  pendingFit: string | null;       // layer id to zoom to
   setBaseMap: (id: string) => void;
   toggleLabels: () => void;
   addOverlay: (layer: LayerConfig) => void;
@@ -20,8 +21,11 @@ interface LayerStore {
   toggleOverlay: (id: string) => void;
   setOpacity: (id: string, opacity: number) => void;
   reorderOverlays: (fromIndex: number, toIndex: number) => void;
+  updateLayerStyle: (id: string, style: Partial<LayerStyle>) => void;
   flyTo: (center: [number, number], zoom: number) => void;
   clearPendingView: () => void;
+  zoomToLayer: (id: string) => void;
+  clearPendingFit: () => void;
 }
 
 export const useLayerStore = create<LayerStore>((set) => ({
@@ -30,6 +34,7 @@ export const useLayerStore = create<LayerStore>((set) => ({
   labelsVisible: false,
   overlays: [],
   pendingView: null,
+  pendingFit: null,
 
   setBaseMap: (id) =>
     set((state) => ({
@@ -68,8 +73,21 @@ export const useLayerStore = create<LayerStore>((set) => ({
       return { overlays: arr };
     }),
 
+  updateLayerStyle: (id, style) =>
+    set((state) => {
+      const overlays = state.overlays.map((l) => {
+        if (l.id !== id) return l;
+        if (l.type !== 'geojson' && l.type !== 'kml' && l.type !== 'realtime') return l;
+        const vec = l as VectorLayerConfig;
+        return { ...vec, layerStyle: { ...(vec.layerStyle ?? {}), ...style } } as LayerConfig;
+      });
+      return { overlays };
+    }),
+
   flyTo: (center, zoom) => set({ pendingView: { center, zoom } }),
   clearPendingView: () => set({ pendingView: null }),
+  zoomToLayer: (id) => set({ pendingFit: id }),
+  clearPendingFit: () => set({ pendingFit: null }),
 }));
 
 export const selectLabelsConfig = (state: LayerStore): XYZLayerConfig => ({
