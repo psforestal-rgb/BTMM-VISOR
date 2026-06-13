@@ -110,14 +110,16 @@ export const useLayerStore = create<LayerStore>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        // Restore baseMaps visibility based on persisted baseMapId
-        state.baseMaps = BASE_MAPS.map((bm) => ({
-          ...bm,
-          visible: bm.id === state.baseMapId,
-        }));
-        // Clear transient navigation state
-        state.pendingView = null;
-        state.pendingFit = null;
+        // Rehydration is already committed by the time this callback runs,
+        // so use setState to push corrections rather than mutating state directly.
+        useLayerStore.setState({
+          baseMaps: BASE_MAPS.map((bm) => ({
+            ...bm,
+            visible: bm.id === state.baseMapId,
+          })),
+          pendingView: null,
+          pendingFit: null,
+        });
       },
     }
   )

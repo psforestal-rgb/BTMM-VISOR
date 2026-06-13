@@ -12,15 +12,6 @@ import { fromLonLat } from 'ol/proj';
 import { useUIStore } from '../store/uiStore';
 import { VIEW_PROJ } from '../utils/olLayerFactory';
 
-function makeGpsStyle(accuracy: number): Style[] {
-  const accuracyFeatureStyle = new Style({
-    fill: new Fill({ color: 'rgba(51, 153, 255, 0.12)' }),
-    stroke: new Stroke({ color: 'rgba(51, 153, 255, 0.5)', width: 1 }),
-  });
-  void accuracy; // used for circle radius in the OL Geolocation approach
-  return [accuracyFeatureStyle];
-}
-void makeGpsStyle;
 
 const GPS_POINT_STYLE = new Style({
   image: new CircleStyle({
@@ -103,13 +94,15 @@ export function useGeolocation(mapRef: React.RefObject<OLMap | null>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geolocating]);
 
-  // Remove layer on unmount (capture refs before cleanup fn)
+  // Remove layer on unmount; use getter lambdas to read live ref values at cleanup time
   useEffect(() => {
-    const map = mapRef.current;
+    const getMap = () => mapRef.current;
     const getLayer = () => layerRef.current;
+    const getWatchId = () => watchIdRef.current;
     return () => {
-      const watchId = watchIdRef.current;
+      const watchId = getWatchId();
       if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      const map = getMap();
       const layer = getLayer();
       if (map && layer) map.removeLayer(layer);
     };

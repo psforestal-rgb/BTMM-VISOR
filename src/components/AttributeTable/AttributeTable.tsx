@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLayerStore } from '../../store/layerStore';
 import { useUIStore } from '../../store/uiStore';
 import type { FeatureCollection } from 'geojson';
@@ -12,6 +12,13 @@ export function AttributeTable() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
   const [filter, setFilter] = useState('');
+
+  // Reset filter/sort whenever the active layer changes
+  useEffect(() => {
+    setFilter('');
+    setSortKey(null);
+    setSortAsc(true);
+  }, [tableLayerId]);
 
   const layer = overlays.find((l) => l.id === tableLayerId);
 

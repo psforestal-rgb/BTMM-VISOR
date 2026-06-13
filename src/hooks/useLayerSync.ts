@@ -23,6 +23,7 @@ export function useLayerSync(mapRef: React.RefObject<OLMap | null>) {
   const labelsConfig = useLayerStore(selectLabelsConfig);
   const olLayers = useRef(new globalThis.Map<string, BaseLayer>());
   const rtHandles = useRef(new globalThis.Map<string, RealtimeHandle>());
+  const overlayZIndex = useRef(new globalThis.Map<string, number>());
 
   // ── Sync layers ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -79,10 +80,13 @@ export function useLayerSync(mapRef: React.RefObject<OLMap | null>) {
       }
     });
 
-    // Update overlay z-indices based on array order (so drag-reorder is reflected)
+    // Update overlay z-indices only when order changes (avoids redundant OL redraws)
     overlays.forEach((config, idx) => {
-      const layer = olLayers.current.get(config.id);
-      if (layer) layer.setZIndex(10 + idx);
+      const z = 10 + idx;
+      if (overlayZIndex.current.get(config.id) !== z) {
+        olLayers.current.get(config.id)?.setZIndex(z);
+        overlayZIndex.current.set(config.id, z);
+      }
     });
   });
 

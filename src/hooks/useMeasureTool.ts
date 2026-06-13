@@ -114,11 +114,12 @@ export function useMeasureTool(mapRef: React.RefObject<OLMap | null>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [measureMode]);
 
-  // Remove layer on unmount (capture refs before cleanup fn)
+  // Remove layer on unmount; use getter lambdas to read live ref values at cleanup time
   useEffect(() => {
-    const map = mapRef.current;
+    const getMap = () => mapRef.current;
     const getLayer = () => layerRef.current;
     return () => {
+      const map = getMap();
       const layer = getLayer();
       if (map && layer) map.removeLayer(layer);
     };

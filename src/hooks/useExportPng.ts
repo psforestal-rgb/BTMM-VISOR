@@ -6,8 +6,9 @@ export function useExportPng(mapRef: React.RefObject<OLMap | null>) {
   const { pendingExport, clearExport } = useUIStore();
 
   useEffect(() => {
-    if (!pendingExport || !mapRef.current) return;
-    clearExport();
+    if (!pendingExport) return;
+    clearExport(); // always clear so pendingExport never stays true
+    if (!mapRef.current) return;
 
     const map = mapRef.current;
     map.once('rendercomplete', () => {
