@@ -1,38 +1,40 @@
 import type { XYZLayerConfig } from '../types/layer';
 
+// Google tile URLs (informal — no API key required for tile access,
+// but subject to Google's Terms of Service)
+const G = (lyrs: string): string =>
+  `https://mt1.google.com/vt/lyrs=${lyrs}&x={x}&y={y}&z={z}`;
+
 export const BASE_MAPS: XYZLayerConfig[] = [
   {
-    id: 'osm',
-    title: 'OpenStreetMap',
+    id: 'google-satellite',
+    title: 'Google Satélite',
     type: 'xyz',
-    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attributions:
-      '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
+    url: G('s'),
+    attributions: '© <a href="https://www.google.com/maps">Google</a>',
+    maxZoom: 20,
     visible: true,
     opacity: 1,
     zIndex: 0,
   },
   {
-    id: 'satellite',
-    title: 'Satélite (ESRI)',
+    id: 'google-hybrid',
+    title: 'Google Híbrido',
     type: 'xyz',
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attributions:
-      'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-    maxZoom: 19,
+    url: G('y'),
+    attributions: '© <a href="https://www.google.com/maps">Google</a>',
+    maxZoom: 20,
     visible: false,
     opacity: 1,
     zIndex: 0,
   },
   {
-    id: 'topo',
-    title: 'OpenTopoMap',
+    id: 'google-maps',
+    title: 'Google Maps',
     type: 'xyz',
-    url: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
-    attributions:
-      'Map data: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map display: © <a href="http://opentopomap.org">OpenTopoMap</a>',
-    maxZoom: 17,
+    url: G('m'),
+    attributions: '© <a href="https://www.google.com/maps">Google</a>',
+    maxZoom: 20,
     visible: false,
     opacity: 1,
     zIndex: 0,

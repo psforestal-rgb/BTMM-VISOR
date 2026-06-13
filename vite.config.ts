@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  optimizeDeps: {
+    // sql.js ships its own WASM — keep it out of Vite's pre-bundle step
+    exclude: ['sql.js'],
+  },
   plugins: [
     react(),
     VitePWA({

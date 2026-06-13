@@ -21,8 +21,15 @@
 
 .toolbar-actions {
   display: flex;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.tb-hint {
+  font-size: 0.7rem;
+  color: #555580;
+  white-space: nowrap;
 }
 
 .tb-btn {

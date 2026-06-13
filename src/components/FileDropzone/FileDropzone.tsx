@@ -15,8 +15,8 @@ export function FileDropzone({ children }: { children: React.ReactNode }) {
       const files = Array.from(e.dataTransfer.files);
       for (const file of files) {
         try {
-          const cfg = await loadLayerFile(file);
-          addOverlay(cfg);
+          const configs = await loadLayerFile(file);
+          configs.forEach(addOverlay);
         } catch {
           // Silently skip unsupported files dropped accidentally
         }
@@ -35,7 +35,7 @@ export function FileDropzone({ children }: { children: React.ReactNode }) {
       {children}
       {dragging && (
         <div className="dropzone-overlay">
-          <div className="dropzone-hint">Suelta tu archivo GeoJSON o KML aquí</div>
+          <div className="dropzone-hint">Suelta tu capa vectorial aquí — GeoJSON · KML · GPX · SHP (zip) · GPKG</div>
         </div>
       )}
     </div>

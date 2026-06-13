@@ -1,28 +1,29 @@
 import { useRef, useState } from 'react';
 import { useLayerStore } from '../../store/layerStore';
 import { loadLayerFile } from '../../utils/fileLoaders';
-import { AddWMSDialog } from './AddWMSDialog';
-import { AddWFSDialog } from './AddWFSDialog';
-import { AddRealtimeDialog } from './AddRealtimeDialog';
 import './Toolbar.css';
+
+const ACCEPT = '.geojson,.json,.kml,.gpx,.zip,.gpkg';
 
 export function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addOverlay = useLayerStore((s) => s.addOverlay);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<'wms' | 'wfs' | 'realtime' | null>(null);
 
   const handleFiles = async (files: FileList | null) => {
-    if (!files) return;
+    if (!files?.length) return;
     setError(null);
+    setLoading(true);
     for (const file of Array.from(files)) {
       try {
-        const config = await loadLayerFile(file);
-        addOverlay(config);
+        const configs = await loadLayerFile(file);
+        configs.forEach(addOverlay);
       } catch (e) {
         setError((e as Error).message);
       }
     }
+    setLoading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -31,23 +32,20 @@ export function Toolbar() {
       <header className="toolbar">
         <span className="toolbar-brand">BTMM VISOR</span>
         <div className="toolbar-actions">
-          <button className="tb-btn" onClick={() => fileInputRef.current?.click()} title="Cargar GeoJSON o KML">
-            + Archivo
+          <button
+            className="tb-btn"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading}
+            title="Cargar GeoJSON, KML, GPX, Shapefile (.zip) o GeoPackage (.gpkg)"
+          >
+            {loading ? 'Cargando…' : '+ Capa vectorial'}
           </button>
-          <button className="tb-btn" onClick={() => setDialog('wms')} title="Agregar servicio WMS">
-            + WMS
-          </button>
-          <button className="tb-btn" onClick={() => setDialog('wfs')} title="Agregar servicio WFS">
-            + WFS
-          </button>
-          <button className="tb-btn" onClick={() => setDialog('realtime')} title="Agregar capa en tiempo real">
-            + Tiempo real
-          </button>
+          <span className="tb-hint">GeoJSON · KML · GPX · SHP (zip) · GPKG</span>
         </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept=".geojson,.json,.kml"
+          accept={ACCEPT}
           multiple
           hidden
           onChange={(e) => handleFiles(e.target.files)}
@@ -57,24 +55,6 @@ export function Toolbar() {
         <div className="error-banner" onClick={() => setError(null)}>
           {error} <span className="error-close">✕</span>
         </div>
-      )}
-      {dialog === 'wms' && (
-        <AddWMSDialog
-          onAdd={(cfg) => { addOverlay(cfg); setDialog(null); }}
-          onClose={() => setDialog(null)}
-        />
-      )}
-      {dialog === 'wfs' && (
-        <AddWFSDialog
-          onAdd={(cfg) => { addOverlay(cfg); setDialog(null); }}
-          onClose={() => setDialog(null)}
-        />
-      )}
-      {dialog === 'realtime' && (
-        <AddRealtimeDialog
-          onAdd={(cfg) => { addOverlay(cfg); setDialog(null); }}
-          onClose={() => setDialog(null)}
-        />
       )}
     </>
   );
