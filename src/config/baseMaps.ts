@@ -1,40 +1,38 @@
-import type { XYZLayerConfig } from '../types/layer';
+import type { BingLayerConfig } from '../types/layer';
 
-// Google tile URLs (informal — no API key required for tile access,
-// but subject to Google's Terms of Service)
-const G = (lyrs: string): string =>
-  `https://mt1.google.com/vt/lyrs=${lyrs}&x={x}&y={y}&z={z}`;
+// Key is read from VITE_BING_KEY in .env.local (never commit the key)
+const KEY = import.meta.env.VITE_BING_KEY as string ?? '';
 
-export const BASE_MAPS: XYZLayerConfig[] = [
+export const BASE_MAPS: BingLayerConfig[] = [
   {
-    id: 'google-satellite',
-    title: 'Google Satélite',
-    type: 'xyz',
-    url: G('s'),
-    attributions: '© <a href="https://www.google.com/maps">Google</a>',
-    maxZoom: 20,
+    id: 'bing-aerial',
+    title: 'Bing Satélite',
+    type: 'bing',
+    imagerySet: 'Aerial',
+    apiKey: KEY,
+    maxZoom: 19,
     visible: true,
     opacity: 1,
     zIndex: 0,
   },
   {
-    id: 'google-hybrid',
-    title: 'Google Híbrido',
-    type: 'xyz',
-    url: G('y'),
-    attributions: '© <a href="https://www.google.com/maps">Google</a>',
-    maxZoom: 20,
+    id: 'bing-hybrid',
+    title: 'Bing Híbrido',
+    type: 'bing',
+    imagerySet: 'AerialWithLabelsOnDemand',
+    apiKey: KEY,
+    maxZoom: 19,
     visible: false,
     opacity: 1,
     zIndex: 0,
   },
   {
-    id: 'google-maps',
-    title: 'Google Maps',
-    type: 'xyz',
-    url: G('m'),
-    attributions: '© <a href="https://www.google.com/maps">Google</a>',
-    maxZoom: 20,
+    id: 'bing-road',
+    title: 'Bing Maps',
+    type: 'bing',
+    imagerySet: 'RoadOnDemand',
+    apiKey: KEY,
+    maxZoom: 19,
     visible: false,
     opacity: 1,
     zIndex: 0,

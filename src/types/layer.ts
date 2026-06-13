@@ -1,4 +1,4 @@
-export type LayerType = 'xyz' | 'wms' | 'wfs' | 'geojson' | 'kml' | 'realtime';
+export type LayerType = 'xyz' | 'bing' | 'wms' | 'wfs' | 'geojson' | 'kml' | 'realtime';
 
 export interface BaseLayerConfig {
   id: string;
@@ -13,6 +13,13 @@ export interface XYZLayerConfig extends BaseLayerConfig {
   type: 'xyz';
   url: string;
   attributions?: string;
+  maxZoom?: number;
+}
+
+export interface BingLayerConfig extends BaseLayerConfig {
+  type: 'bing';
+  imagerySet: 'Aerial' | 'AerialWithLabels' | 'AerialWithLabelsOnDemand' | 'Road' | 'RoadOnDemand' | 'CanvasDark' | 'CanvasLight';
+  apiKey: string;
   maxZoom?: number;
 }
 
@@ -55,6 +62,7 @@ export interface RealtimeLayerConfig extends BaseLayerConfig {
 
 export type LayerConfig =
   | XYZLayerConfig
+  | BingLayerConfig
   | WMSLayerConfig
   | WFSLayerConfig
   | GeoJSONLayerConfig

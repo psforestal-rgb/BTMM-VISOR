@@ -2,6 +2,7 @@ import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import ImageLayer from 'ol/layer/Image';
 import XYZ from 'ol/source/XYZ';
+import BingMaps from 'ol/source/BingMaps';
 import TileWMS from 'ol/source/TileWMS';
 import ImageWMS from 'ol/source/ImageWMS';
 import VectorSource from 'ol/source/Vector';
@@ -18,6 +19,19 @@ export function createOLLayer(config: LayerConfig): BaseLayer {
         source: new XYZ({
           url: config.url,
           attributions: config.attributions,
+          maxZoom: config.maxZoom ?? 19,
+        }),
+        visible: config.visible,
+        opacity: config.opacity,
+        zIndex: config.zIndex ?? 0,
+        properties: { id: config.id },
+      });
+
+    case 'bing':
+      return new TileLayer({
+        source: new BingMaps({
+          key: config.apiKey,
+          imagerySet: config.imagerySet,
           maxZoom: config.maxZoom ?? 19,
         }),
         visible: config.visible,
