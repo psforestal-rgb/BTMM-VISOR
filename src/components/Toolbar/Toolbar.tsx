@@ -1,7 +1,11 @@
 import { useRef, useState } from 'react';
 import { useLayerStore } from '../../store/layerStore';
+import { useUIStore } from '../../store/uiStore';
 import { loadLayerFile } from '../../utils/fileLoaders';
 import { PRESET_VIEWS } from '../../config/presetViews';
+import { GotoDialog } from './GotoDialog';
+import { WMSDialog } from './WMSDialog';
+import { WFSDialog } from './WFSDialog';
 import './Toolbar.css';
 
 const ACCEPT = '.geojson,.json,.kml,.gpx,.zip,.gpkg';
@@ -16,9 +20,15 @@ export function Toolbar({ panelOpen, onTogglePanel }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addOverlay = useLayerStore((s) => s.addOverlay);
   const flyTo = useLayerStore((s) => s.flyTo);
+
+  const { measureMode, setMeasureMode, geolocating, setGeolocating, triggerExport } = useUIStore();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedView, setSelectedView] = useState('');
+  const [showGoto, setShowGoto] = useState(false);
+  const [showWMS, setShowWMS] = useState(false);
+  const [showWFS, setShowWFS] = useState(false);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -43,6 +53,10 @@ export function Toolbar({ panelOpen, onTogglePanel }: Props) {
     if (view) flyTo(view.center, view.zoom);
   };
 
+  const toggleMeasure = (mode: 'distance' | 'area') => {
+    setMeasureMode(measureMode === mode ? 'off' : mode);
+  };
+
   return (
     <>
       <header className="toolbar">
@@ -52,15 +66,12 @@ export function Toolbar({ panelOpen, onTogglePanel }: Props) {
           onClick={onTogglePanel}
           title={panelOpen ? 'Ocultar panel de capas' : 'Mostrar panel de capas'}
           aria-label="Panel de capas"
-        >
-          ☰
-        </button>
+        >☰</button>
 
         <span className="toolbar-brand">BTMM VISOR</span>
-
         <div className="toolbar-divider" />
 
-        {/* Preset views — compact select */}
+        {/* Preset views */}
         <label className="toolbar-label" htmlFor="view-select">Vista</label>
         <select
           id="view-select"
@@ -76,6 +87,36 @@ export function Toolbar({ panelOpen, onTogglePanel }: Props) {
 
         <div className="toolbar-divider" />
 
+        {/* Go to coordinates */}
+        <button
+          className="tb-btn tb-btn--icon"
+          onClick={() => setShowGoto(true)}
+          title="Ir a coordenadas"
+        >🎯</button>
+
+        {/* Geolocation */}
+        <button
+          className={`tb-btn tb-btn--icon${geolocating ? ' tb-btn--active' : ''}`}
+          onClick={() => setGeolocating(!geolocating)}
+          title={geolocating ? 'Desactivar GPS' : 'Activar GPS'}
+        >📍</button>
+
+        <div className="toolbar-divider" />
+
+        {/* Measurement tools */}
+        <button
+          className={`tb-btn tb-btn--sm${measureMode === 'distance' ? ' tb-btn--active' : ''}`}
+          onClick={() => toggleMeasure('distance')}
+          title="Medir distancia"
+        >📏 Dist.</button>
+        <button
+          className={`tb-btn tb-btn--sm${measureMode === 'area' ? ' tb-btn--active' : ''}`}
+          onClick={() => toggleMeasure('area')}
+          title="Medir área"
+        >⬡ Área</button>
+
+        <div className="toolbar-divider" />
+
         {/* Load vector layer */}
         <button
           className="tb-btn"
@@ -83,8 +124,27 @@ export function Toolbar({ panelOpen, onTogglePanel }: Props) {
           disabled={loading}
           title={FILE_HINT}
         >
-          {loading ? 'Cargando…' : '+ Capa vectorial'}
+          {loading ? '⏳ Cargando…' : '+ Vector'}
         </button>
+
+        {/* WMS */}
+        <button className="tb-btn" onClick={() => setShowWMS(true)} title="Agregar capa WMS">
+          + WMS
+        </button>
+
+        {/* WFS */}
+        <button className="tb-btn" onClick={() => setShowWFS(true)} title="Agregar capa WFS">
+          + WFS
+        </button>
+
+        <div className="toolbar-divider" />
+
+        {/* Export PNG */}
+        <button
+          className="tb-btn tb-btn--icon"
+          onClick={triggerExport}
+          title="Exportar vista como PNG"
+        >🖼️</button>
 
         <input
           ref={fileInputRef}
@@ -101,6 +161,18 @@ export function Toolbar({ panelOpen, onTogglePanel }: Props) {
           {error} <span className="error-close">✕</span>
         </div>
       )}
+
+      {/* Loading overlay on map */}
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner" />
+          <span>Cargando archivo…</span>
+        </div>
+      )}
+
+      {showGoto && <GotoDialog onClose={() => setShowGoto(false)} />}
+      {showWMS && <WMSDialog onClose={() => setShowWMS(false)} />}
+      {showWFS && <WFSDialog onClose={() => setShowWFS(false)} />}
     </>
   );
 }

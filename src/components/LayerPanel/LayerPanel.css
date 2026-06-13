@@ -52,6 +52,7 @@
 .panel-section {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #2e2e4a;
+  overflow-y: auto;
 }
 
 .section-heading {
@@ -79,17 +80,29 @@
   cursor: pointer;
 }
 
-/* ── Overlay items ────────────────────────────────────────── */
+/* ── Overlay items ────────────────────────────────────────────── */
 
 .overlay-item {
   margin-bottom: 0.6rem;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid #22224a;
+  cursor: grab;
+}
+
+.overlay-item:active {
+  cursor: grabbing;
 }
 
 .overlay-item:last-child {
   border-bottom: none;
   margin-bottom: 0;
+}
+
+.overlay-item--drag-over {
+  outline: 1px dashed #7777ee;
+  outline-offset: 2px;
+  background: #1e1e3a;
+  border-radius: 4px;
 }
 
 .overlay-row {
@@ -99,11 +112,21 @@
   gap: 0.3rem;
 }
 
+.drag-handle {
+  color: #3a3a6a;
+  font-size: 1rem;
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+  line-height: 1;
+}
+.drag-handle:hover { color: #6666aa; }
+
 .layer-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 110px;
+  max-width: 90px;
   font-size: 0.82rem;
 }
 
@@ -144,13 +167,13 @@
   border-color: #aa3333;
 }
 
-/* ── Opacity row ──────────────────────────────────────────── */
+/* ── Opacity row ──────────────────────────────────────────────── */
 
 .opacity-row {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.15rem 0 0 1.2rem;
+  padding: 0.15rem 0 0 1.4rem;
 }
 
 .opacity-label {
@@ -166,7 +189,7 @@
   cursor: pointer;
 }
 
-/* ── Symbology panel ──────────────────────────────────────── */
+/* ── Symbology panel ──────────────────────────────────────────── */
 
 .style-panel {
   background: #12122a;
@@ -227,7 +250,7 @@
 /* ── Mouse position (OL control override) ─────────────────── */
 .ol-mouse-position {
   top: 0.4rem;
-  right: 2.8rem;    /* right of FullScreen button */
+  right: 2.8rem;
   left: auto;
   bottom: auto;
   background: rgba(15, 15, 31, 0.72);

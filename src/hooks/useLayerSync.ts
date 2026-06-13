@@ -78,6 +78,12 @@ export function useLayerSync(mapRef: React.RefObject<OLMap | null>) {
         }
       }
     });
+
+    // Update overlay z-indices based on array order (so drag-reorder is reflected)
+    overlays.forEach((config, idx) => {
+      const layer = olLayers.current.get(config.id);
+      if (layer) layer.setZIndex(10 + idx);
+    });
   });
 
   // ── flyTo ──────────────────────────────────────────────────────────────────
@@ -111,8 +117,9 @@ export function useLayerSync(mapRef: React.RefObject<OLMap | null>) {
 
   // ── Cleanup realtime handles on unmount ────────────────────────────────────
   useEffect(() => {
+    const handles = rtHandles.current;
     return () => {
-      rtHandles.current.forEach((handle) => {
+      handles.forEach((handle) => {
         if (handle instanceof WebSocket) handle.close();
         else clearInterval(handle as ReturnType<typeof setInterval>);
       });

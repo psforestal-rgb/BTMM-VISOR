@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLayerStore } from '../../store/layerStore';
+import { useUIStore } from '../../store/uiStore';
 import { DEFAULT_LAYER_STYLE } from '../../types/layer';
 import type { LayerConfig, VectorLayerConfig } from '../../types/layer';
 import './LayerPanel.css';
@@ -18,14 +19,39 @@ export function LayerPanel({ open, onClose }: Props) {
     baseMapId, baseMaps, labelsVisible,
     overlays, setBaseMap, toggleLabels,
     toggleOverlay, removeOverlay, setOpacity,
-    updateLayerStyle, zoomToLayer,
+    updateLayerStyle, zoomToLayer, reorderOverlays,
   } = useLayerStore();
 
-  // Which layer's style panel is open
+  const { tableLayerId, setTableLayerId } = useUIStore();
+
   const [styleOpen, setStyleOpen] = useState<string | null>(null);
 
   const toggleStyle = (id: string) =>
     setStyleOpen((prev) => (prev === id ? null : id));
+
+  // Drag-and-drop state (operates on display indices)
+  const dragIndexRef = useRef<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+
+  // Display order is reversed (newest on top)
+  const displayOverlays = [...overlays].reverse();
+  const n = overlays.length;
+
+  const handleDragStart = (di: number) => { dragIndexRef.current = di; };
+  const handleDragEnd = () => { dragIndexRef.current = null; setDragOver(null); };
+  const handleDragOver = (e: React.DragEvent, di: number) => {
+    e.preventDefault();
+    setDragOver(di);
+  };
+  const handleDrop = (di: number) => {
+    const from = dragIndexRef.current;
+    if (from === null || from === di) { handleDragEnd(); return; }
+    // Convert display indices to store indices
+    const storeFrom = n - 1 - from;
+    const storeTo = n - 1 - di;
+    reorderOverlays(storeFrom, storeTo);
+    handleDragEnd();
+  };
 
   return (
     <aside className={`layer-panel${open ? '' : ' layer-panel--closed'}`}>
@@ -61,18 +87,29 @@ export function LayerPanel({ open, onClose }: Props) {
       </section>
 
       {/* ── User overlays ─────────────────────────────────── */}
-      {overlays.length > 0 && (
+      {displayOverlays.length > 0 && (
         <section className="panel-section">
           <h3 className="section-heading">Capas cargadas</h3>
-          {[...overlays].reverse().map((layer) => {
+          {displayOverlays.map((layer, di) => {
             const vec = isVector(layer) ? (layer as VectorLayerConfig) : null;
             const style = { ...DEFAULT_LAYER_STYLE, ...(vec?.layerStyle ?? {}) };
-            const open = styleOpen === layer.id;
+            const styleIsOpen = styleOpen === layer.id;
+            const isTable = tableLayerId === layer.id;
+            const isGeoJSON = layer.type === 'geojson';
 
             return (
-              <div key={layer.id} className="overlay-item">
-                {/* Row 1: visibility + title + actions */}
+              <div
+                key={layer.id}
+                className={`overlay-item${dragOver === di ? ' overlay-item--drag-over' : ''}`}
+                draggable
+                onDragStart={() => handleDragStart(di)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, di)}
+                onDrop={() => handleDrop(di)}
+              >
+                {/* Row 1: drag handle + visibility + title + actions */}
                 <div className="overlay-row">
+                  <span className="drag-handle" title="Arrastrar para reordenar">⠿</span>
                   <label className="checkbox-row">
                     <input
                       type="checkbox"
@@ -89,9 +126,16 @@ export function LayerPanel({ open, onClose }: Props) {
                       title="Zoom a la capa"
                       onClick={() => zoomToLayer(layer.id)}
                     >⊕</button>
+                    {isGeoJSON && (
+                      <button
+                        className={`icon-btn${isTable ? ' icon-btn--active' : ''}`}
+                        title="Tabla de atributos"
+                        onClick={() => setTableLayerId(isTable ? null : layer.id)}
+                      >≡</button>
+                    )}
                     {vec && (
                       <button
-                        className={`icon-btn${open ? ' icon-btn--active' : ''}`}
+                        className={`icon-btn${styleIsOpen ? ' icon-btn--active' : ''}`}
                         title="Simbología"
                         onClick={() => toggleStyle(layer.id)}
                       >🎨</button>
@@ -99,7 +143,11 @@ export function LayerPanel({ open, onClose }: Props) {
                     <button
                       className="icon-btn icon-btn--danger"
                       title="Eliminar capa"
-                      onClick={() => { removeOverlay(layer.id); if (open) setStyleOpen(null); }}
+                      onClick={() => {
+                        removeOverlay(layer.id);
+                        if (styleIsOpen) setStyleOpen(null);
+                        if (isTable) setTableLayerId(null);
+                      }}
                     >✕</button>
                   </div>
                 </div>
@@ -116,7 +164,7 @@ export function LayerPanel({ open, onClose }: Props) {
                 </div>
 
                 {/* Row 3: symbology panel */}
-                {vec && open && (
+                {vec && styleIsOpen && (
                   <div className="style-panel">
                     <div className="style-row">
                       <label className="style-label">Relleno</label>

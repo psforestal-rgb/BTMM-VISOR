@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { LayerConfig, LayerStyle, VectorLayerConfig, XYZLayerConfig } from '../types/layer';
 import { BASE_MAPS, LABELS_OVERLAY } from '../config/baseMaps';
 
@@ -13,7 +14,7 @@ interface LayerStore {
   labelsVisible: boolean;
   overlays: LayerConfig[];
   pendingView: PendingView | null;
-  pendingFit: string | null;       // layer id to zoom to
+  pendingFit: string | null;
   setBaseMap: (id: string) => void;
   toggleLabels: () => void;
   addOverlay: (layer: LayerConfig) => void;
@@ -28,67 +29,99 @@ interface LayerStore {
   clearPendingFit: () => void;
 }
 
-export const useLayerStore = create<LayerStore>((set) => ({
-  baseMapId: 'esri-satellite',
-  baseMaps: BASE_MAPS,
-  labelsVisible: false,
-  overlays: [],
-  pendingView: null,
-  pendingFit: null,
+export const useLayerStore = create<LayerStore>()(
+  persist(
+    (set) => ({
+      baseMapId: 'esri-satellite',
+      baseMaps: BASE_MAPS,
+      labelsVisible: false,
+      overlays: [],
+      pendingView: null,
+      pendingFit: null,
 
-  setBaseMap: (id) =>
-    set((state) => ({
-      baseMapId: id,
-      baseMaps: state.baseMaps.map((bm) => ({ ...bm, visible: bm.id === id })),
-    })),
+      setBaseMap: (id) =>
+        set((state) => ({
+          baseMapId: id,
+          baseMaps: state.baseMaps.map((bm) => ({ ...bm, visible: bm.id === id })),
+        })),
 
-  toggleLabels: () =>
-    set((state) => ({ labelsVisible: !state.labelsVisible })),
+      toggleLabels: () =>
+        set((state) => ({ labelsVisible: !state.labelsVisible })),
 
-  addOverlay: (layer) =>
-    set((state) => ({ overlays: [...state.overlays, layer] })),
+      addOverlay: (layer) =>
+        set((state) => ({ overlays: [...state.overlays, layer] })),
 
-  removeOverlay: (id) =>
-    set((state) => ({ overlays: state.overlays.filter((l) => l.id !== id) })),
+      removeOverlay: (id) =>
+        set((state) => ({ overlays: state.overlays.filter((l) => l.id !== id) })),
 
-  toggleOverlay: (id) =>
-    set((state) => ({
-      overlays: state.overlays.map((l) =>
-        l.id === id ? { ...l, visible: !l.visible } : l
-      ),
-    })),
+      toggleOverlay: (id) =>
+        set((state) => ({
+          overlays: state.overlays.map((l) =>
+            l.id === id ? { ...l, visible: !l.visible } : l
+          ),
+        })),
 
-  setOpacity: (id, opacity) =>
-    set((state) => ({
-      overlays: state.overlays.map((l) =>
-        l.id === id ? { ...l, opacity } : l
-      ),
-    })),
+      setOpacity: (id, opacity) =>
+        set((state) => ({
+          overlays: state.overlays.map((l) =>
+            l.id === id ? { ...l, opacity } : l
+          ),
+        })),
 
-  reorderOverlays: (fromIndex, toIndex) =>
-    set((state) => {
-      const arr = [...state.overlays];
-      const [item] = arr.splice(fromIndex, 1);
-      arr.splice(toIndex, 0, item);
-      return { overlays: arr };
+      reorderOverlays: (fromIndex, toIndex) =>
+        set((state) => {
+          const arr = [...state.overlays];
+          const [item] = arr.splice(fromIndex, 1);
+          arr.splice(toIndex, 0, item);
+          return { overlays: arr };
+        }),
+
+      updateLayerStyle: (id, style) =>
+        set((state) => {
+          const overlays = state.overlays.map((l) => {
+            if (l.id !== id) return l;
+            if (l.type !== 'geojson' && l.type !== 'kml' && l.type !== 'realtime') return l;
+            const vec = l as VectorLayerConfig;
+            return { ...vec, layerStyle: { ...(vec.layerStyle ?? {}), ...style } } as LayerConfig;
+          });
+          return { overlays };
+        }),
+
+      flyTo: (center, zoom) => set({ pendingView: { center, zoom } }),
+      clearPendingView: () => set({ pendingView: null }),
+      zoomToLayer: (id) => set({ pendingFit: id }),
+      clearPendingFit: () => set({ pendingFit: null }),
     }),
-
-  updateLayerStyle: (id, style) =>
-    set((state) => {
-      const overlays = state.overlays.map((l) => {
-        if (l.id !== id) return l;
-        if (l.type !== 'geojson' && l.type !== 'kml' && l.type !== 'realtime') return l;
-        const vec = l as VectorLayerConfig;
-        return { ...vec, layerStyle: { ...(vec.layerStyle ?? {}), ...style } } as LayerConfig;
-      });
-      return { overlays };
-    }),
-
-  flyTo: (center, zoom) => set({ pendingView: { center, zoom } }),
-  clearPendingView: () => set({ pendingView: null }),
-  zoomToLayer: (id) => set({ pendingFit: id }),
-  clearPendingFit: () => set({ pendingFit: null }),
-}));
+    {
+      name: 'btmm-visor-v1',
+      partialize: (state) => ({
+        baseMapId: state.baseMapId,
+        labelsVisible: state.labelsVisible,
+        overlays: state.overlays,
+      }),
+      storage: createJSONStorage(() => {
+        // Wrap setItem to silently catch quota-exceeded errors
+        const s = window.localStorage;
+        return {
+          getItem: (k) => { try { return s.getItem(k); } catch { return null; } },
+          setItem: (k, v) => { try { s.setItem(k, v); } catch { /* quota exceeded */ } },
+          removeItem: (k) => s.removeItem(k),
+        };
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        // Restore baseMaps visibility based on persisted baseMapId
+        state.baseMaps = BASE_MAPS.map((bm) => ({
+          ...bm,
+          visible: bm.id === state.baseMapId,
+        }));
+        // Clear transient navigation state
+        state.pendingView = null;
+        state.pendingFit = null;
+      },
+    }
+  )
+);
 
 export const selectLabelsConfig = (state: LayerStore): XYZLayerConfig => ({
   ...LABELS_OVERLAY,
