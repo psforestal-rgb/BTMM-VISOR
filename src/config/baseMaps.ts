@@ -1,37 +1,37 @@
-import type { BingLayerConfig } from '../types/layer';
+import type { XYZLayerConfig } from '../types/layer';
 
-// Key is read from VITE_BING_KEY in .env.local (never commit the key)
-const KEY = import.meta.env.VITE_BING_KEY as string ?? '';
-
-export const BASE_MAPS: BingLayerConfig[] = [
+export const BASE_MAPS: XYZLayerConfig[] = [
   {
-    id: 'bing-aerial',
-    title: 'Bing Satélite',
-    type: 'bing',
-    imagerySet: 'Aerial',
-    apiKey: KEY,
+    id: 'esri-satellite',
+    title: 'Satélite (ESRI)',
+    type: 'xyz',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attributions:
+      'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
     maxZoom: 19,
     visible: true,
     opacity: 1,
     zIndex: 0,
   },
   {
-    id: 'bing-hybrid',
-    title: 'Bing Híbrido',
-    type: 'bing',
-    imagerySet: 'AerialWithLabelsOnDemand',
-    apiKey: KEY,
+    id: 'osm',
+    title: 'OSM Mapas',
+    type: 'xyz',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attributions:
+      '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
     visible: false,
     opacity: 1,
     zIndex: 0,
   },
   {
-    id: 'bing-road',
-    title: 'Bing Maps',
-    type: 'bing',
-    imagerySet: 'RoadOnDemand',
-    apiKey: KEY,
+    id: 'carto-labels',
+    title: 'Solo etiquetas',
+    type: 'xyz',
+    url: 'https://{a-d}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}@2x.png',
+    attributions:
+      '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
     maxZoom: 19,
     visible: false,
     opacity: 1,

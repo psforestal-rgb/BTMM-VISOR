@@ -1,12 +1,10 @@
 import { create } from 'zustand';
-import type { BingLayerConfig, LayerConfig, XYZLayerConfig } from '../types/layer';
+import type { LayerConfig, XYZLayerConfig } from '../types/layer';
 import { BASE_MAPS } from '../config/baseMaps';
-
-type BaseMapConfig = XYZLayerConfig | BingLayerConfig;
 
 interface LayerStore {
   baseMapId: string;
-  baseMaps: BaseMapConfig[];
+  baseMaps: XYZLayerConfig[];
   overlays: LayerConfig[];
   setBaseMap: (id: string) => void;
   addOverlay: (layer: LayerConfig) => void;
