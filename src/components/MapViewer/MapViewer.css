@@ -1,0 +1,70 @@
+.map-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-viewer {
+  width: 100%;
+  height: 100%;
+}
+
+/* Override OL default control positions to not overlap the panel */
+.map-viewer .ol-zoom {
+  top: 0.5rem;
+  left: 0.5rem;
+}
+
+.map-viewer .ol-full-screen {
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.map-viewer .ol-attribution {
+  bottom: 0.25rem;
+  right: 0.25rem;
+  max-width: 60%;
+  font-size: 0.65rem;
+}
+
+.map-viewer .ol-scale-line {
+  bottom: 0.25rem;
+  left: 0.25rem;
+}
+
+/* ── Measure badge ────────────────────────────────────────────── */
+.measure-badge {
+  position: absolute;
+  bottom: 2.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 15, 31, 0.88);
+  border: 1px solid #ffcc00;
+  border-radius: 20px;
+  padding: 0.3rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 20;
+}
+
+.measure-badge__mode {
+  font-size: 0.72rem;
+  color: #ffcc00;
+  font-weight: 600;
+}
+
+.measure-badge__value {
+  font-size: 0.9rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+.measure-badge__hint {
+  font-size: 0.75rem;
+  color: #aaaaaa;
+  font-style: italic;
+}

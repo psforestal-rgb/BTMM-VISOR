@@ -1,0 +1,31 @@
+.dropzone-host {
+  position: relative;
+  display: contents;
+}
+
+.dropzone-host.dropzone-active > :not(.dropzone-overlay) {
+  pointer-events: none;
+  filter: brightness(0.6);
+}
+
+.dropzone-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(80, 80, 200, 0.25);
+  border: 3px dashed #7777ee;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dropzone-hint {
+  background: #1a1a2e;
+  color: #aaaaee;
+  border-radius: 8px;
+  padding: 1.5rem 3rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}

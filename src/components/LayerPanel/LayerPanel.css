@@ -1,0 +1,263 @@
+.layer-panel {
+  width: 240px;
+  min-width: 240px;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;           /* clips content during transition */
+  border-right: 1px solid #2e2e4a;
+  flex-shrink: 0;
+  transition: width 0.22s ease, min-width 0.22s ease;
+}
+
+.layer-panel--closed {
+  width: 0;
+  min-width: 0;
+  border-right: none;
+}
+
+.panel-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8888cc;
+  padding: 0.65rem 0.75rem 0.65rem 1rem;
+  margin: 0;
+  border-bottom: 1px solid #2e2e4a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.panel-close-btn {
+  background: none;
+  border: none;
+  color: #555580;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.panel-close-btn:hover {
+  color: #aaaacc;
+  background: #2a2a4a;
+}
+
+.panel-section {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #2e2e4a;
+  overflow-y: auto;
+}
+
+.section-heading {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6666aa;
+  margin: 0 0 0.5rem;
+}
+
+.radio-row,
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+
+.radio-row input,
+.checkbox-row input {
+  accent-color: #7777ee;
+  cursor: pointer;
+}
+
+/* ── Overlay items ────────────────────────────────────────────── */
+
+.overlay-item {
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #22224a;
+  cursor: grab;
+}
+
+.overlay-item:active {
+  cursor: grabbing;
+}
+
+.overlay-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.overlay-item--drag-over {
+  outline: 1px dashed #7777ee;
+  outline-offset: 2px;
+  background: #1e1e3a;
+  border-radius: 4px;
+}
+
+.overlay-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.drag-handle {
+  color: #3a3a6a;
+  font-size: 1rem;
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+  line-height: 1;
+}
+.drag-handle:hover { color: #6666aa; }
+
+.layer-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 90px;
+  font-size: 0.82rem;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: #8888cc;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.4;
+}
+
+.icon-btn:hover {
+  border-color: #5555aa;
+  color: #ccccff;
+}
+
+.icon-btn--active {
+  border-color: #5555aa;
+  color: #aaaaff;
+  background: #2a2a4a;
+}
+
+.icon-btn--danger {
+  color: #cc5555;
+}
+
+.icon-btn--danger:hover {
+  color: #ff6666;
+  border-color: #aa3333;
+}
+
+/* ── Opacity row ──────────────────────────────────────────────── */
+
+.opacity-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0 0 1.4rem;
+}
+
+.opacity-label {
+  font-size: 0.65rem;
+  color: #6666aa;
+  white-space: nowrap;
+}
+
+.opacity-slider {
+  flex: 1;
+  accent-color: #7777ee;
+  height: 3px;
+  cursor: pointer;
+}
+
+/* ── Symbology panel ──────────────────────────────────────────── */
+
+.style-panel {
+  background: #12122a;
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.style-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.style-label {
+  font-size: 0.65rem;
+  color: #6666aa;
+  min-width: 36px;
+  white-space: nowrap;
+}
+
+.color-input {
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #3a3a6a;
+  border-radius: 3px;
+  cursor: pointer;
+  background: none;
+}
+
+.mini-slider {
+  flex: 1;
+  accent-color: #7777ee;
+  height: 3px;
+  cursor: pointer;
+}
+
+.num-input {
+  width: 44px;
+  background: #0f0f1f;
+  border: 1px solid #3a3a6a;
+  border-radius: 3px;
+  color: #e0e0e0;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.3rem;
+  text-align: center;
+}
+
+.style-unit {
+  font-size: 0.65rem;
+  color: #6666aa;
+}
+
+/* ── Mouse position (OL control override) ─────────────────── */
+.ol-mouse-position {
+  top: 0.4rem;
+  right: 2.8rem;
+  left: auto;
+  bottom: auto;
+  background: rgba(15, 15, 31, 0.72);
+  color: #aaaaee;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 3px;
+  pointer-events: none;
+  white-space: nowrap;
+}

@@ -1,0 +1,119 @@
+.attr-table-panel {
+  flex-shrink: 0;
+  height: 220px;
+  background: #12122a;
+  border-top: 1px solid #2e2e4a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.attr-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid #2e2e4a;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.attr-table-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8888cc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attr-table-count {
+  font-weight: 400;
+  color: #555580;
+}
+
+.attr-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.attr-table-filter {
+  background: #0f0f1f;
+  border: 1px solid #3a3a6a;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 0.75rem;
+  padding: 0.18rem 0.45rem;
+  width: 160px;
+}
+.attr-table-filter:focus { outline: none; border-color: #6666cc; }
+
+.attr-table-close {
+  background: none;
+  border: none;
+  color: #555580;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 5px;
+  border-radius: 3px;
+  line-height: 1;
+}
+.attr-table-close:hover { color: #aaaacc; background: #2a2a4a; }
+
+.attr-table-msg {
+  padding: 0.75rem 1rem;
+  color: #6666aa;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.attr-table-scroll {
+  overflow: auto;
+  flex: 1;
+}
+
+.attr-table {
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  width: max-content;
+  min-width: 100%;
+}
+
+.attr-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #1a1a2e;
+}
+
+.attr-table th {
+  padding: 0.3rem 0.75rem;
+  text-align: left;
+  color: #6666aa;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #2e2e4a;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.attr-table th:hover { color: #aaaacc; }
+.attr-th--sorted { color: #8888ee !important; }
+
+.attr-table td {
+  padding: 0.25rem 0.75rem;
+  color: #ccccdd;
+  border-bottom: 1px solid #1a1a30;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attr-table tbody tr:hover td {
+  background: #1e1e38;
+}
