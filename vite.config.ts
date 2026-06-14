@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // Served from https://psforestal-rgb.github.io/BTMM-VISOR/ on GitHub Pages.
+  // The base must match the repository name (case-sensitive) so assets resolve.
+  base: '/BTMM-VISOR/',
   optimizeDeps: {
     // sql.js ships its own WASM — keep it out of Vite's pre-bundle step
     exclude: ['sql.js'],
@@ -15,6 +18,7 @@ export default defineConfig({
       manifest: {
         name: 'BTMM VISOR',
         short_name: 'VISOR',
+        lang: 'es',
         description: 'Visor de mapas BTMM — offline, capas vectoriales y servicios OGC',
         theme_color: '#1a1a2e',
         background_color: '#1a1a2e',
