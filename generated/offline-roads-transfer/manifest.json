@@ -1,0 +1,11 @@
+{
+  "chunks": 23,
+  "chunk_size": 8000,
+  "road_lines": 11539,
+  "route2_lines": 32,
+  "raw_bytes": 883504,
+  "xz_bytes": 134248,
+  "base64_chars": 179000,
+  "sha256_raw": "36befcc774ee6d294c870ea62aaf1d49674e07a57fcffdb5f2b5e864ed74fda8",
+  "sha256_xz": "3924ed43496f251081cf85b8dcce4ca20de53c18de1c31284c13f4299a1e990f"
+}
