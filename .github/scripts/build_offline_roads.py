@@ -1,0 +1,323 @@
+import base64
+import gzip
+import hashlib
+import json
+from pathlib import Path
+
+import requests
+from pyproj import Transformer
+from shapely.geometry import box, mapping, shape
+from shapely.ops import transform
+
+# Extensión de las cinco ASP más 20 km, en CR05 / CRTM05 (EPSG:5367).
+BBOX = (480857.87867475, 1033853.92841926, 582805.67396194, 1103864.3148)
+CLIP = box(*BBOX)
+SESSION = requests.Session()
+SESSION.headers.update({
+    "User-Agent": "BTMM-offline-map-builder/1.0 (SINAC technical prototype)",
+    "Accept": "application/json, application/geo+json, */*",
+})
+TO_5367 = Transformer.from_crs(4326, 5367, always_xy=True).transform
+
+
+def request_json(url, params, timeout=180):
+    response = SESSION.get(url, params=params, timeout=timeout)
+    response.raise_for_status()
+    ctype = response.headers.get("content-type", "").lower()
+    if "json" not in ctype and not response.text.lstrip().startswith(("{", "[")):
+        raise ValueError(f"Respuesta no JSON de {url}: {ctype}; {response.text[:160]!r}")
+    return response.json()
+
+
+def iter_tiles(size=25000.0):
+    minx, miny, maxx, maxy = BBOX
+    x = minx
+    while x < maxx:
+        nx = min(x + size, maxx)
+        y = miny
+        while y < maxy:
+            ny = min(y + size, maxy)
+            yield (x, y, nx, ny)
+            y = ny
+        x = nx
+
+
+def detect_and_transform(geom):
+    if geom.is_empty:
+        return geom
+    minx, miny, maxx, maxy = geom.bounds
+    if -180 <= minx <= 180 and -90 <= miny <= 90 and -180 <= maxx <= 180 and -90 <= maxy <= 90:
+        return transform(TO_5367, geom)
+    return geom
+
+
+def feature_key(feature):
+    if feature.get("id") is not None:
+        return str(feature["id"])
+    props = feature.get("properties") or {}
+    for key in ("FID", "fid", "OBJECTID", "objectid", "gml_id", "codigo", "CODIGO"):
+        if props.get(key) is not None:
+            geom_hash = hashlib.sha1(json.dumps(feature.get("geometry"), sort_keys=True).encode()).hexdigest()[:12]
+            return f"{key}:{props[key]}:{geom_hash}"
+    return hashlib.sha1(json.dumps(feature, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def fetch_snit_wfs():
+    endpoints = [
+        ("https://geos.snitcr.go.cr/be/IGN_5/ows", "IGN_5:vias_5000"),
+        ("https://www.snitcr.go.cr/servicios/datos/wfs", "vias_5000"),
+        ("http://www.snitcr.go.cr/servicios/datos/wfs", "vias_5000"),
+    ]
+    errors = []
+    for endpoint, typename in endpoints:
+        collected = {}
+        try:
+            for index, tile in enumerate(iter_tiles(), 1):
+                params = {
+                    "service": "WFS",
+                    "version": "1.0.0",
+                    "request": "GetFeature",
+                    "typeName": typename,
+                    "outputFormat": "application/json",
+                    "srsName": "EPSG:5367",
+                    "bbox": ",".join(str(v) for v in tile) + ",EPSG:5367",
+                }
+                data = request_json(endpoint, params)
+                if data.get("type") != "FeatureCollection":
+                    raise ValueError(f"Formato inesperado: {str(data)[:180]}")
+                for feature in data.get("features", []):
+                    collected[feature_key(feature)] = feature
+                print(f"SNIT {index}: {len(data.get('features', []))} elementos; acumulado {len(collected)}")
+            if collected:
+                return list(collected.values()), f"SNIT WFS vias_5000 — {endpoint}"
+            errors.append(f"{endpoint}: sin elementos")
+        except Exception as exc:
+            errors.append(f"{endpoint}: {type(exc).__name__}: {exc}")
+            print(errors[-1])
+    raise RuntimeError(" | ".join(errors))
+
+
+def esri_json_to_features(data):
+    if data.get("type") == "FeatureCollection":
+        return data.get("features", [])
+    features = []
+    for item in data.get("features", []):
+        attrs = item.get("attributes") or {}
+        geometry = item.get("geometry") or {}
+        paths = geometry.get("paths")
+        if paths:
+            geom = {"type": "LineString", "coordinates": paths[0]} if len(paths) == 1 else {"type": "MultiLineString", "coordinates": paths}
+            features.append({"type": "Feature", "properties": attrs, "geometry": geom})
+    return features
+
+
+def fetch_rmgir():
+    endpoint = "https://rmgir.proyectomesoamerica.org/server/rest/services/RMGIR/Costa_Rica/MapServer/2/query"
+    collected = {}
+    for index, tile in enumerate(iter_tiles(18000.0), 1):
+        params = {
+            "where": "1=1",
+            "geometry": ",".join(str(v) for v in tile),
+            "geometryType": "esriGeometryEnvelope",
+            "inSR": "5367",
+            "spatialRel": "esriSpatialRelIntersects",
+            "outFields": "FID,RUTA,TIPO,LONGITUD",
+            "returnGeometry": "true",
+            "outSR": "5367",
+            "f": "geojson",
+        }
+        data = request_json(endpoint, params)
+        tile_features = esri_json_to_features(data)
+        for feature in tile_features:
+            collected[feature_key(feature)] = feature
+        print(f"RMGIR {index}: {len(tile_features)} elementos; acumulado {len(collected)}")
+    if not collected:
+        raise RuntimeError("RMGIR no devolvió elementos")
+    return list(collected.values()), "Proyecto Mesoamérica RMGIR — Red de caminos de Costa Rica 1:50 000"
+
+
+def fetch_github_fallback():
+    url = "https://raw.githubusercontent.com/TonyCozu/Densidad_red_vial/main/datos/redvial-crtm05.geojson"
+    response = SESSION.get(url, timeout=300)
+    response.raise_for_status()
+    data = response.json()
+    features = data.get("features", [])
+    if not features:
+        raise RuntimeError("El respaldo GeoJSON no contiene elementos")
+    return features, "Respaldo GeoJSON redvial-crtm05 (repositorio Densidad_red_vial)"
+
+
+def fetch_general_roads():
+    errors = []
+    for loader in (fetch_snit_wfs, fetch_rmgir, fetch_github_fallback):
+        try:
+            features, source = loader()
+            print(f"Fuente seleccionada: {source}; {len(features)} elementos")
+            return features, source, errors
+        except Exception as exc:
+            message = f"{loader.__name__}: {type(exc).__name__}: {exc}"
+            errors.append(message)
+            print(message)
+    raise RuntimeError("No se pudo obtener ninguna fuente vial: " + " | ".join(errors))
+
+
+def fetch_route_2():
+    endpoint = "https://services5.arcgis.com/7nySRPdooOyUWjk6/arcgis/rest/services/VISORHUB_CONAVI/FeatureServer/6/query"
+    params = {
+        "where": "Ruta=2",
+        "geometry": ",".join(str(v) for v in BBOX),
+        "geometryType": "esriGeometryEnvelope",
+        "inSR": "5367",
+        "spatialRel": "esriSpatialRelIntersects",
+        "outFields": "OBJECTID,Ruta,Jerarquía,Descripcio",
+        "returnGeometry": "true",
+        "outSR": "5367",
+        "f": "geojson",
+        "resultRecordCount": "2000",
+    }
+    data = request_json(endpoint, params)
+    features = esri_json_to_features(data)
+    if not features:
+        raise RuntimeError("CONAVI no devolvió geometrías de la Ruta 2")
+    return features, "CONAVI — RED VIAL NACIONAL, Ruta 2"
+
+
+def get_prop(props, names):
+    normalized = {
+        str(k).lower().translate(str.maketrans("íáéóú", "iaeou")): v
+        for k, v in props.items()
+    }
+    for name in names:
+        key = name.lower().translate(str.maketrans("íáéóú", "iaeou"))
+        value = normalized.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def compact_props(props):
+    return {
+        "cat": get_prop(props, ("categoria", "tipo", "clase", "classification", "highway")),
+        "ruta": get_prop(props, ("num_ruta", "ruta", "ref", "route")),
+        "jer": get_prop(props, ("jerarquia", "jerarquía", "hierarchy")),
+        "nom": get_prop(props, ("nombre", "name", "descripcio", "descripcion", "ruta")),
+    }
+
+
+def round_coords(coords):
+    if not coords:
+        return coords
+    if isinstance(coords[0], (int, float)):
+        return [round(float(coords[0]), 1), round(float(coords[1]), 1)]
+    return [round_coords(value) for value in coords]
+
+
+def flatten_lines(geom):
+    if geom.geom_type == "LineString":
+        return [geom]
+    if geom.geom_type == "MultiLineString":
+        return list(geom.geoms)
+    if geom.geom_type == "GeometryCollection":
+        result = []
+        for child in geom.geoms:
+            result.extend(flatten_lines(child))
+        return result
+    return []
+
+
+def compact_features(features, simplify=2.5, force_route2=False):
+    result = []
+    seen = set()
+    for feature in features:
+        geometry_json = feature.get("geometry")
+        if not geometry_json:
+            continue
+        try:
+            geom = detect_and_transform(shape(geometry_json))
+            if geom.is_empty or not geom.intersects(CLIP):
+                continue
+            geom = geom.intersection(CLIP)
+            if simplify:
+                geom = geom.simplify(simplify, preserve_topology=False)
+            props = compact_props(feature.get("properties") or {})
+            if force_route2:
+                props["ruta"] = 2
+            for line in flatten_lines(geom):
+                if line.is_empty or line.length < 3:
+                    continue
+                coordinates = round_coords(mapping(line)["coordinates"])
+                signature = hashlib.sha1(json.dumps(coordinates, separators=(",", ":")).encode()).hexdigest()
+                if signature in seen:
+                    continue
+                seen.add(signature)
+                item = {"g": coordinates}
+                for key, value in props.items():
+                    if value not in (None, ""):
+                        item[key] = value
+                result.append(item)
+        except Exception as exc:
+            print(f"Elemento descartado: {type(exc).__name__}: {exc}")
+    return result
+
+
+general_features, general_source, source_errors = fetch_general_roads()
+roads = compact_features(general_features, simplify=2.5)
+
+route2_error = None
+try:
+    route2_features, route2_source = fetch_route_2()
+    route2 = compact_features(route2_features, simplify=1.5, force_route2=True)
+except Exception as exc:
+    route2_error = f"{type(exc).__name__}: {exc}"
+    route2_source = "Derivada de la red general"
+    route2 = []
+    for item in roads:
+        ruta = str(item.get("ruta", "")).strip().lower()
+        nombre = str(item.get("nom", "")).strip().lower()
+        if ruta in {"2", "002", "rn2", "ruta 2", "ruta nacional 2"} or "interamericana" in nombre or "panamericana" in nombre:
+            route2.append({"g": item["g"], "ruta": 2})
+
+payload = {
+    "schema": 1,
+    "crs": "EPSG:5367",
+    "bbox": list(BBOX),
+    "roads": roads,
+    "route2": route2,
+    "meta": {
+        "general_source": general_source,
+        "route2_source": route2_source,
+        "source_errors": source_errors,
+        "route2_error": route2_error,
+        "general_input_features": len(general_features),
+        "road_lines": len(roads),
+        "route2_lines": len(route2),
+        "simplification_m": {"roads": 2.5, "route2": 1.5},
+    },
+}
+
+raw = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+compressed = gzip.compress(raw, compresslevel=9, mtime=0)
+encoded = base64.b64encode(compressed).decode("ascii")
+
+output = Path("generated/offline-roads")
+output.mkdir(parents=True, exist_ok=True)
+chunk_size = 60000
+chunks = [encoded[i:i + chunk_size] for i in range(0, len(encoded), chunk_size)]
+for old in output.glob("chunk_*.txt"):
+    old.unlink()
+for index, chunk in enumerate(chunks):
+    (output / f"chunk_{index:03d}.txt").write_text(chunk, encoding="ascii")
+
+manifest = {
+    "schema": 1,
+    "chunks": len(chunks),
+    "chunk_size": chunk_size,
+    "raw_bytes": len(raw),
+    "gzip_bytes": len(compressed),
+    "base64_chars": len(encoded),
+    "sha256_raw": hashlib.sha256(raw).hexdigest(),
+    "sha256_gzip": hashlib.sha256(compressed).hexdigest(),
+    "meta": payload["meta"],
+}
+(output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+print(json.dumps(manifest, ensure_ascii=False, indent=2))
