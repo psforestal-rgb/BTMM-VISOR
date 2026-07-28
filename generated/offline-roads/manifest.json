@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "chunks": 6,
+  "chunk_size": 60000,
+  "raw_bytes": 1416526,
+  "gzip_bytes": 253521,
+  "base64_chars": 338028,
+  "sha256_raw": "50aa869ae4d550da1af035a359f5d8ef6cc872a7cb9bb69be478cd7e5d030375",
+  "sha256_gzip": "bfd201e4b46bf64c6737c99f54d0dfba950bea2ac6b69ff70e99e97446dbc0b0",
+  "meta": {
+    "general_source": "Proyecto Mesoamérica RMGIR — Red de caminos de Costa Rica 1:50 000",
+    "route2_source": "CONAVI — RED VIAL NACIONAL, Ruta 2",
+    "source_errors": [
+      "fetch_snit_wfs: RuntimeError: https://geos.snitcr.go.cr/be/IGN_5/ows: HTTPError: 504 Server Error: Gateway Time-out for url: https://geos.snitcr.go.cr/be/IGN_5/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=IGN_5%3Avias_5000&outputFormat=application%2Fjson&srsName=EPSG%3A5367&bbox=480857.87867475%2C1058853.9284192598%2C505857.87867475%2C1083853.9284192598%2CEPSG%3A5367 | https://www.snitcr.go.cr/servicios/datos/wfs: HTTPError: 404 Client Error: Not Found for url: https://www.snitcr.go.cr/servicios/datos/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=vias_5000&outputFormat=application%2Fjson&srsName=EPSG%3A5367&bbox=480857.87867475%2C1033853.92841926%2C505857.87867475%2C1058853.9284192598%2CEPSG%3A5367 | http://www.snitcr.go.cr/servicios/datos/wfs: HTTPError: 404 Client Error: Not Found for url: https://www.snitcr.go.cr/servicios/datos/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=vias_5000&outputFormat=application%2Fjson&srsName=EPSG%3A5367&bbox=480857.87867475%2C1033853.92841926%2C505857.87867475%2C1058853.9284192598%2CEPSG%3A5367"
+    ],
+    "route2_error": null,
+    "general_input_features": 11538,
+    "road_lines": 11539,
+    "route2_lines": 32,
+    "simplification_m": {
+      "roads": 2.5,
+      "route2": 1.5
+    }
+  }
+}
