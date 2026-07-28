@@ -41,11 +41,11 @@ jobs:
           compressed = lzma.compress(raw, format=lzma.FORMAT_XZ, preset=9 | lzma.PRESET_EXTREME)
           transfer = base64.b64encode(compressed).decode('ascii')
 
-          output = Path('generated/offline-roads-transfer')
+          output = Path('generated/offline-roads-transfer-small')
           output.mkdir(parents=True, exist_ok=True)
           for old in output.glob('chunk_*.txt'):
               old.unlink()
-          chunk_size = 8000
+          chunk_size = 3000
           chunks = [transfer[i:i + chunk_size] for i in range(0, len(transfer), chunk_size)]
           for index, chunk in enumerate(chunks):
               (output / f'chunk_{index:03d}.txt').write_text(chunk, encoding='ascii')
@@ -67,6 +67,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add generated/offline-roads-transfer
-          git commit -m "Create compact transfer chunks for offline roads" || exit 0
+          git add generated/offline-roads-transfer-small
+          git commit -m "Create small transfer chunks for offline roads" || exit 0
           git push origin HEAD:assistant/offline-road-export-20260728
