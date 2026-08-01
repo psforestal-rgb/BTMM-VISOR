@@ -24,7 +24,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run lint
       - run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ github.sha }}
+      - run: npm run verify:build
+        env:
+          VITE_APP_VERSION: ${{ github.sha }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
