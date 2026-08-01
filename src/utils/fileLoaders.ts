@@ -2,10 +2,14 @@ import GeoJSON from 'ol/format/GeoJSON';
 import KML from 'ol/format/KML';
 import GPX from 'ol/format/GPX';
 import WKB from 'ol/format/WKB';
+import proj4 from 'proj4';
+import { register } from 'ol/proj/proj4';
+import { get as getProjection } from 'ol/proj';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type { GeoJSONLayerConfig, KMLLayerConfig, LayerConfig } from '../types/layer';
 import type { FeatureCollection } from 'geojson';
+import type { Database } from 'sql.js';
 import { VIEW_PROJ } from './olLayerFactory';
 
 const geoJSONFmt = new GeoJSON();
@@ -126,6 +130,56 @@ function parseGPKGWKBOffset(bytes: Uint8Array): number {
   return 8 + envBytes;
 }
 
+function quoteIdentifier(identifier: string): string {
+  return `"${identifier.replace(/"/g, '""')}"`;
+}
+
+function ensureGPKGProjection(db: Database, srsId: number): string {
+  const conventionalCode = `EPSG:${srsId}`;
+  if (getProjection(conventionalCode)) return conventionalCode;
+
+  const columns = db.exec('PRAGMA table_info("gpkg_spatial_ref_sys")');
+  const columnNames = (columns[0]?.values ?? []).map((row) => String(row[1]));
+  const definitionColumn = columnNames.includes('definition_12_063')
+    ? 'definition_12_063'
+    : 'definition';
+
+  const srsRows = db.exec(
+    `SELECT organization, organization_coordsys_id, ${quoteIdentifier(definitionColumn)}, definition ` +
+    `FROM gpkg_spatial_ref_sys WHERE srs_id = ${Math.trunc(srsId)}`
+  );
+  const row = srsRows[0]?.values[0];
+  if (!row) throw new Error(`No existe la definición del SRS ${srsId}`);
+
+  const organization = String(row[0] ?? '').toUpperCase();
+  const organizationId = Number(row[1]);
+  const preferredDefinition = String(row[2] ?? '');
+  const fallbackDefinition = String(row[3] ?? '');
+  const definition = preferredDefinition !== 'undefined' && preferredDefinition.trim()
+    ? preferredDefinition
+    : fallbackDefinition;
+
+  if (!definition || definition === 'undefined') {
+    throw new Error(`El SRS ${srsId} no incluye una definición transformable`);
+  }
+
+  const projectionCode = organization && Number.isFinite(organizationId)
+    ? `${organization}:${organizationId}`
+    : `GPKG:${srsId}`;
+
+  try {
+    proj4.defs(projectionCode, definition);
+    register(proj4);
+  } catch {
+    throw new Error(`No se pudo registrar la proyección ${projectionCode}`);
+  }
+
+  if (!getProjection(projectionCode)) {
+    throw new Error(`La proyección ${projectionCode} no es compatible`);
+  }
+  return projectionCode;
+}
+
 export async function loadGPKGFile(file: File): Promise<GeoJSONLayerConfig[]> {
   const buffer = await readAsArrayBuffer(file);
 
@@ -141,7 +195,9 @@ export async function loadGPKGFile(file: File): Promise<GeoJSONLayerConfig[]> {
   let tableRows: (string | number | bigint | Uint8Array | null)[][];
   try {
     const res = db.exec(
-      "SELECT table_name, srs_id FROM gpkg_contents WHERE data_type = 'features'"
+      "SELECT c.table_name, g.column_name, g.srs_id " +
+      "FROM gpkg_contents c JOIN gpkg_geometry_columns g ON g.table_name = c.table_name " +
+      "WHERE c.data_type = 'features'"
     );
     tableRows = res[0]?.values ?? [];
   } catch {
@@ -155,23 +211,27 @@ export async function loadGPKGFile(file: File): Promise<GeoJSONLayerConfig[]> {
   }
 
   const layers: GeoJSONLayerConfig[] = [];
+  const projectionErrors: string[] = [];
   const baseName = file.name.replace(/\.gpkg$/i, '');
 
   for (const row of tableRows) {
     const tableName = row[0] as string;
-    const srsId = (row[1] as number | null) ?? 4326;
+    const geomCol = (row[1] as string | null) ?? 'geom';
+    const srsId = (row[2] as number | null) ?? 4326;
+    let dataProjection: string;
+    try {
+      dataProjection = ensureGPKGProjection(db, srsId);
+    } catch (error) {
+      projectionErrors.push(`${tableName}: ${(error as Error).message}`);
+      continue;
+    }
 
-    const geomRes = db.exec(
-      `SELECT column_name FROM gpkg_geometry_columns WHERE table_name = '${tableName}'`
-    );
-    const geomCol = (geomRes[0]?.values[0]?.[0] as string | undefined) ?? 'geom';
-
-    const infoRes = db.exec(`PRAGMA table_info("${tableName}")`);
+    const infoRes = db.exec(`PRAGMA table_info(${quoteIdentifier(tableName)})`);
     const allCols = (infoRes[0]?.values ?? []).map((r) => r[1] as string);
     const attrCols = allCols.filter((c) => c !== geomCol);
 
-    const selectCols = [geomCol, ...attrCols].map((c) => `"${c}"`).join(', ');
-    const dataRes = db.exec(`SELECT ${selectCols} FROM "${tableName}"`);
+    const selectCols = [geomCol, ...attrCols].map(quoteIdentifier).join(', ');
+    const dataRes = db.exec(`SELECT ${selectCols} FROM ${quoteIdentifier(tableName)}`);
     if (!dataRes.length) continue;
 
     const features: Feature<Geometry>[] = [];
@@ -184,7 +244,7 @@ export async function loadGPKGFile(file: File): Promise<GeoJSONLayerConfig[]> {
         // Slice as ArrayBuffer (avoiding SharedArrayBuffer)
         const wkb: ArrayBuffer = geomVal.slice(wkbOffset).buffer as ArrayBuffer;
         const geom = wkbFmt.readGeometry(wkb, {
-          dataProjection: `EPSG:${srsId}`,
+          dataProjection,
           featureProjection: VIEW_PROJ,
         }) as Geometry | null;
         if (!geom) continue;
@@ -206,6 +266,9 @@ export async function loadGPKGFile(file: File): Promise<GeoJSONLayerConfig[]> {
   }
 
   db.close();
+  if (!layers.length && projectionErrors.length) {
+    throw new Error(`No se pudieron cargar las proyecciones del GeoPackage: ${projectionErrors.join('; ')}`);
+  }
   if (!layers.length) throw new Error(`No se encontraron features en "${file.name}"`);
   return layers;
 }

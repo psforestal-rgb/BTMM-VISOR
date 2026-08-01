@@ -27,8 +27,12 @@ de coordenadas de Costa Rica.
 - **Reordenar capas** — arrastrar y soltar en el panel.
 - **Exportar PNG** — captura de la vista actual del mapa.
 - **Persistencia** — mapa base, etiquetas y capas cargadas se guardan en
-  `localStorage` entre sesiones.
-- **Offline** — tiles de OSM y ESRI cacheados con Workbox/Service Worker.
+  IndexedDB entre sesiones; las instalaciones anteriores se migran automáticamente.
+- **Offline** — teselas de OSM, ESRI y etiquetas CARTO cacheadas con
+  Workbox/Service Worker. El WASM necesario para GeoPackage también se conserva.
+- **Actualización automática** — cada despliegue publica un identificador de versión.
+  Los clientes detectan una versión nueva sin usar caché, actualizan el Service Worker
+  y recargan la aplicación automáticamente.
 
 ## Inicio rápido
 
@@ -58,6 +62,12 @@ GitHub Pages en cada push a `main`. Para activarlo la primera vez:
 2. Hacer merge a `main`.
 
 El sitio queda en `https://psforestal-rgb.github.io/BTMM-VISOR/`.
+
+El workflow usa el SHA del commit como versión de la aplicación y ejecuta ESLint
+antes del build. Después verifica que el Service Worker incluya las reglas offline
+y que `version.json` permanezca fuera del precache. Los recursos compilados conservan
+nombres con hash; `version.json` se consulta con `cache: no-store` para evitar que
+una instalación quede anclada a una versión anterior.
 
 ## Iconos PWA
 

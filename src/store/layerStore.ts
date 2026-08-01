@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { LayerConfig, LayerStyle, VectorLayerConfig, XYZLayerConfig } from '../types/layer';
 import { BASE_MAPS, LABELS_OVERLAY } from '../config/baseMaps';
+import { indexedDBStorage } from './indexedDBStorage';
 
 export interface PendingView {
   center: [number, number]; // [lon, lat] WGS84
@@ -99,15 +100,7 @@ export const useLayerStore = create<LayerStore>()(
         labelsVisible: state.labelsVisible,
         overlays: state.overlays,
       }),
-      storage: createJSONStorage(() => {
-        // Wrap setItem to silently catch quota-exceeded errors
-        const s = window.localStorage;
-        return {
-          getItem: (k) => { try { return s.getItem(k); } catch { return null; } },
-          setItem: (k, v) => { try { s.setItem(k, v); } catch { /* quota exceeded */ } },
-          removeItem: (k) => s.removeItem(k),
-        };
-      }),
+      storage: createJSONStorage(() => indexedDBStorage),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         // Rehydration is already committed by the time this callback runs,

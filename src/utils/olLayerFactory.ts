@@ -51,6 +51,7 @@ export function createOLLayer(config: LayerConfig): BaseLayer {
       return new TileLayer({
         source: new XYZ({
           url: config.url,
+          crossOrigin: 'anonymous',
           attributions: config.attributions,
           maxZoom: config.maxZoom ?? 20,
         }),
